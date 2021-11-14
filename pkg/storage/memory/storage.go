@@ -2,9 +2,7 @@ package memory
 
 import (
 	"fmt"
-	"io"
 	"math/rand"
-	"strings"
 	"time"
 
 	"jensch.works/zl/pkg/storage"
@@ -16,20 +14,20 @@ type Storage struct {
 }
 
 type ZettelStorage struct {
-	data map[z.ZId]zettel
+	data map[z.Id]Zettel
 }
 
 func NewStorage() storage.Storer {
 	return &ZettelStorage{
-		data: make(map[z.ZId]zettel),
+		data: make(map[z.Id]Zettel),
 	}
 }
 
 func (zs *ZettelStorage) NewZettel(title string) z.Zettel {
-	zl := zettel{
+	zl := Zettel{
 		id:      generateId(),
 		title:   title,
-		content: "",
+		text:    "",
 		created: time.Now(),
 	}
 	zs.data[zl.id] = zl
@@ -37,9 +35,9 @@ func (zs *ZettelStorage) NewZettel(title string) z.Zettel {
 }
 
 func (zs *ZettelStorage) SetZettel(z z.Zettel) error {
-	zl, ok := z.(*zettel)
+	zl, ok := z.(*Zettel)
 	if !ok {
-		return fmt.Errorf("Invalid zettel type")
+		return fmt.Errorf("Invalid zettel type. tbh this should accept anything")
 	}
 
 	zs.data[zl.id] = *zl
@@ -47,7 +45,7 @@ func (zs *ZettelStorage) SetZettel(z z.Zettel) error {
 	return nil
 }
 
-func (zs *ZettelStorage) Zettel(id z.ZId) (z.Zettel, error) {
+func (zs *ZettelStorage) Zettel(id z.Id) (z.Zettel, error) {
 	if val, ok := zs.data[id]; ok {
 		return &val, nil
 	}
@@ -74,40 +72,14 @@ func (i *iter) ForEach(cb func(z.Zettel) error) error {
 	return nil
 }
 
-type zettel struct {
-	id      z.ZId
-	created time.Time
-	title   string
-	content string
-}
-
-func (z *zettel) Id() z.ZId {
-	return z.id
-}
-
-func (z *zettel) Title() string {
-	return z.title
-}
-
-func (z *zettel) CreateTime() time.Time {
-	return z.created
-}
-
-func (z *zettel) Reader() (io.ReadCloser, error) {
-	return io.NopCloser(strings.NewReader(z.content)), nil
-}
-
 const idCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-func generateId() z.ZId {
+func generateId() z.Id {
 	t := time.Now()
-	// y, m, d := t.Date()
-	// h, min, s := t.Clock()
 	rng := rand.New(rand.NewSource(t.UnixNano()))
 	rbuf := [12]byte{}
 	for i := 0; i < len(rbuf); i++ {
 		rbuf[i] = idCharset[rng.Intn(len(idCharset))]
 	}
-	return z.ZId(rbuf[:])
-	// return z.ZId(fmt.Sprintf("%02d%02d%02d-%02d%02d%02d-%s", y, m, d, h, min, s, rbuf))
+	return z.Id(rbuf[:])
 }

@@ -7,32 +7,29 @@ import (
 	"time"
 )
 
-type ZId string
+type Id string
 
 type Zettel interface {
-	Id() ZId
+	Id() Id
 	Title() string
 	CreateTime() time.Time
-	Reader() (io.ReadCloser, error)
+	Text() (string, error)
+	SetText(t string)
+	io.Reader
 }
 
-func Refs(zettel Zettel) []ZId {
-	results := []ZId{}
+func Refs(zettel Zettel) []Id {
+	results := []Id{}
 	buf := new(strings.Builder)
-	reader, err := zettel.Reader()
+	_, err := io.Copy(buf, zettel)
 	if err != nil {
-		return make([]ZId, 0)
-	}
-	_, err = io.Copy(buf, reader)
-	if err != nil {
-		return make([]ZId, 0)
+		return make([]Id, 0)
 	}
 	reg := regexp.MustCompile(`\[.*?\]\((.*?)\)`)
 	matches := reg.FindAllStringSubmatch(buf.String(), 0)
 	for _, m := range matches {
-		results = append(results, ZId(m[1]))
+		results = append(results, Id(m[1]))
 	}
 
 	return results
 }
-
