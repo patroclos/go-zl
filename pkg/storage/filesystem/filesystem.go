@@ -8,9 +8,9 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 	"time"
 
-	"jensch.works/zl/pkg/storage"
 	"jensch.works/zl/pkg/storage/memory"
 	z "jensch.works/zl/pkg/zettel"
 )
@@ -20,18 +20,13 @@ type Storage struct {
 }
 
 type ZettelStorage struct {
-	dir string
+	Directory string
 }
 
 type Zettel struct {
 	memory.Zettel
 	s     *ZettelStorage
 	exist bool
-}
-
-// return a filesystem storage based on the directory configured in XDG_USER_CONFIG
-func NewStorage(dir string) (storage.Storer, error) {
-	return &ZettelStorage{dir: dir}, nil
 }
 
 func (zs *ZettelStorage) NewZettel(title string) z.Zettel {
@@ -44,7 +39,7 @@ func (zs *ZettelStorage) NewZettel(title string) z.Zettel {
 }
 
 func (zl *ZettelStorage) SetZettel(z z.Zettel) error {
-	pz := path.Join(zl.dir, string(z.Id()))
+	pz := path.Join(zl.Directory, string(z.Id()))
 	err := os.MkdirAll(pz, 0755)
 	if err != nil {
 		return err
@@ -67,7 +62,7 @@ func (zl *ZettelStorage) SetZettel(z z.Zettel) error {
 var errNoTitle = errors.New("no title")
 
 func (zl *ZettelStorage) Zettel(id z.Id) (z.Zettel, error) {
-	readmePath := path.Join(zl.dir, string(id), "README.md")
+	readmePath := path.Join(zl.Directory, string(id), "README.md")
 
 	f, err := os.Open(readmePath)
 	if err != nil {
@@ -82,8 +77,9 @@ func (zl *ZettelStorage) Zettel(id z.Id) (z.Zettel, error) {
 		return nil, errNoTitle
 	}
 
-	title := scn.Text()
-	_, err = f.Seek(int64(len(title) + 2), 0)
+	title := strings.TrimPrefix(scn.Text(), "# ")
+
+	_, err = f.Seek(int64(len(title)+2), 0)
 	if err != nil {
 		return nil, err
 	}
@@ -93,17 +89,36 @@ func (zl *ZettelStorage) Zettel(id z.Id) (z.Zettel, error) {
 		return nil, err
 	}
 
-	model := memory.CreateZettel(id, title, string(rest), time.Now())
+	model := memory.CreateZettel(id, title, strings.TrimLeft(string(rest), "\n"), time.Now())
 
 	zettel := Zettel{
 		Zettel: model,
-		s: zl,
-		exist: true,
+		s:      zl,
+		exist:  true,
 	}
 
 	return &zettel, nil
 }
 
-func (zl *ZettelStorage) IterZettel() (storage.ZettelIter, error) {
-	return nil, errors.New("no")
+func (zs ZettelStorage) ForEach(fn func(z z.Zettel) error) error {
+	files, err := ioutil.ReadDir(zs.Directory)
+	if err != nil {
+		return err
+	}
+
+	for _, f := range files {
+		if !f.IsDir() {
+			continue
+		}
+
+		zettel, err := zs.Zettel(z.Id(f.Name()))
+		if err != nil {
+			continue
+		}
+		if err = fn(zettel); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

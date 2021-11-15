@@ -18,17 +18,13 @@ type Zettel interface {
 	io.Reader
 }
 
-func Refs(zettel Zettel) []Id {
-	results := []Id{}
-	buf := new(strings.Builder)
-	_, err := io.Copy(buf, zettel)
-	if err != nil {
-		return make([]Id, 0)
-	}
-	reg := regexp.MustCompile(`\[.*?\]\((.*?)\)`)
-	matches := reg.FindAllStringSubmatch(buf.String(), 0)
+func Refs(text string) []Id {
+	reg := regexp.MustCompile(`\[.+\]\((.+)\)`)
+	matches := reg.FindAllStringSubmatch(text, -1)
+	results := make([]Id, 0, 8)
 	for _, m := range matches {
-		results = append(results, Id(m[1]))
+		id := strings.Trim(m[1], " /")
+		results = append(results, Id(id))
 	}
 
 	return results

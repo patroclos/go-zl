@@ -47,19 +47,8 @@ func (zs *ZettelStorage) Zettel(id z.Id) (z.Zettel, error) {
 	return nil, storage.ErrZettelNotFound
 }
 
-func (zs *ZettelStorage) IterZettel() (storage.ZettelIter, error) {
-	i := iter{
-		zs: zs,
-	}
-	return &i, nil
-}
-
-type iter struct {
-	zs *ZettelStorage
-}
-
-func (i *iter) ForEach(cb func(z.Zettel) error) error {
-	for _, v := range i.zs.data {
+func (zs *ZettelStorage) ForEach(cb func(z.Zettel) error) error {
+	for _, v := range zs.data {
 		if err := cb(&v); err != nil {
 			return err
 		}
