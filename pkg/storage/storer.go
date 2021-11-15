@@ -25,3 +25,4 @@ type ZettelIter interface {
 	ForEach(func(z.Zettel) error) error
 }
 
+

@@ -24,12 +24,7 @@ func NewStorage() storage.Storer {
 }
 
 func (zs *ZettelStorage) NewZettel(title string) z.Zettel {
-	zl := Zettel{
-		id:      generateId(),
-		title:   title,
-		text:    "",
-		created: time.Now(),
-	}
+	zl := NewZettel(title)
 	zs.data[zl.id] = zl
 	return &zl
 }

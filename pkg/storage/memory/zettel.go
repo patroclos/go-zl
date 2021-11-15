@@ -15,6 +15,24 @@ type Zettel struct {
 	pos     int
 }
 
+func CreateZettel(id zettel.Id, title string, text string, created time.Time) Zettel {
+	return Zettel{
+		id: id,
+		title: title,
+		text: text,
+		created: created,
+	}
+}
+
+func NewZettel(title string) Zettel {
+	return Zettel{
+		id: generateId(),
+		title: title,
+		text: "",
+		created: time.Now(),
+	}
+}
+
 func (z *Zettel) Id() zettel.Id {
 	return z.id
 }
