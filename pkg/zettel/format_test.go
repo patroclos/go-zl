@@ -27,21 +27,21 @@ var (
 )
 
 func ExampleFormatZettel() {
-	tmpl := makeZettel("id1", "Zettel 1", &map[string]string{"zl/inbox": "default"})
-	msg, err := zettel.FormatZettel(tmpl, "{{.Id}} - {{.Title}}")
+	zl := makeZettel("id1", "Zettel 1", &map[string]string{"zl/inbox": "default"})
+	msg, err := zettel.FormatZettel(zl, "{{.Id}} - {{.Title}}")
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println(msg)
 
-	msg, err = zettel.FormatZettel(tmpl, `{{range $k,$v := .Labels}}{{if eq $k "zl/inbox"}}📥 {{end}}{{end}}{{.Id}} - {{.Title}}`)
+	msg, err = zettel.FormatZettel(zl, zettel.DefaultWideFormat)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println(msg)
 	// Output:
 	// id1 - Zettel 1
-	// 📥 id1 - Zettel 1
+	// id1 📥  Zettel 1 map[zl/inbox:default]
 }
 
 
