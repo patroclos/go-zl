@@ -10,6 +10,20 @@ const (
 	DefaultWideFormat = `{{.Id}} {{range $k,$v := .Labels}}{{if eq $k "zl/inbox"}}📥 {{end}}{{end}} {{.Title}} {{ .Labels }}`
 )
 
+type formatData struct {
+	Id     string
+	Title  string
+	CreateTime     time.Time
+	Text   string
+	Labels map[string]string
+	Inbox  *inboxData
+	Link    *LinkInfo
+}
+
+type inboxData struct {
+	Box string
+	Due time.Time
+}
 
 func FormatZettel(in Zettel, format string) (string, error) {
 	zl := toFormatData(in)
@@ -26,34 +40,17 @@ func FormatZettel(in Zettel, format string) (string, error) {
 	return txt, nil
 }
 
-func toFormatData(zl Zettel) *FormatData {
-	data := &FormatData{
+func toFormatData(zl Zettel) *formatData {
+	data := &formatData{
 		Id: string(zl.Id()),
 		Title: zl.Title(),
 	}
 	if meta, err := zl.Metadata(); err == nil {
 		data.Labels = meta.Labels
+		data.Link = meta.Link
+		
+		if meta.Link != nil {
+		}
 	}
 	return data
-}
-
-type FormatData struct {
-	Id     string
-	Title  string
-	CreateTime     time.Time
-	Text   string
-	Labels map[string]string
-	Inbox  *InboxData
-	Lnk    *LinkData
-}
-
-type InboxData struct {
-	Box string
-	Due time.Time
-}
-
-type LinkData struct {
-	A   Id   // typically the "from" end of the relationship
-	B   Id   // typically the "to" end
-	Ctx []Id // context qualifying the relationship
 }
