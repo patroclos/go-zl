@@ -6,25 +6,6 @@ import (
 	"jensch.works/zl/pkg/zettel"
 )
 
-func TestTemplate(t *testing.T) {
-	fmt := "{{ .Id }}  {{ .Title }}"
-	dat := zettel.FormatData{
-		Id:    "testid",
-		Title: "Testerino",
-	}
-
-	txt, err := zettel.FormatZettel(dat, fmt)
-	if err != nil {
-		t.Error(err)
-	}
-
-	expected := "testid  Testerino"
-	if txt != expected {
-		t.Errorf("Expected '%s', got '%s'", expected, txt)
-	}
-
-}
-
 func TestRefParsing(t *testing.T) {
 	in := `
 * id1  Title One
