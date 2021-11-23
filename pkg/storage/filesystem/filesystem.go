@@ -29,7 +29,6 @@ type Zettel struct {
 	memory.Zettel
 	s     *ZettelStorage
 	exist bool
-	Meta  *MetaInfo
 }
 
 func (zs *ZettelStorage) HasZettel(id z.Id) bool {
@@ -99,7 +98,7 @@ func (zl *ZettelStorage) Zettel(id z.Id) (z.Zettel, error) {
 		return nil, err
 	}
 
-	var meta MetaInfo
+	var meta z.MetaInfo
 	f, err = os.Open(metaPath)
 
 	if err == nil {
@@ -113,27 +112,21 @@ func (zl *ZettelStorage) Zettel(id z.Id) (z.Zettel, error) {
 	}
 
 	model := memory.CreateZettel(id, title, strings.TrimLeft(string(rest), "\n"), time.Now())
+	metap, err := model.Metadata()
+	if err != nil {
+		panic(err)
+	}
+	*metap = meta
 
 	zettel := Zettel{
 		Zettel: model,
 		s:      zl,
 		exist:  true,
-		Meta:   &meta,
 	}
 
 	return &zettel, nil
 }
 
-type MetaInfo struct {
-	Labels map[string]string
-	Link   *LinkInfo
-}
-
-type LinkInfo struct {
-	A   string `yaml:"from"`
-	B   string `yaml:"to"`
-	Ctx []string `yaml:"context"`
-}
 
 func (zs ZettelStorage) ForEach(fn func(z z.Zettel) error) error {
 	files, err := ioutil.ReadDir(zs.Directory)

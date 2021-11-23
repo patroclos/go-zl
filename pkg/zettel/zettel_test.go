@@ -8,7 +8,7 @@ import (
 
 func TestTemplate(t *testing.T) {
 	fmt := "{{ .Id }}  {{ .Title }}"
-	dat := zettel.ZettelTemplate{
+	dat := zettel.FormatData{
 		Id:    "testid",
 		Title: "Testerino",
 	}

@@ -37,8 +37,8 @@ func TestLinkMetadata(t *testing.T) {
 		return
 	}
 
-	meta := zl.(*filesystem.Zettel).Meta
-	if meta == nil {
+	meta, err := zl.Metadata()
+	if err != nil {
 		t.Fatal("No metadata parsed for link zettel")
 		return
 	}

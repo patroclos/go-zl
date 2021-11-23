@@ -15,6 +15,7 @@ type Zettel struct {
 	title   string
 	buf     *bytes.Buffer
 	pos     int
+	meta    zettel.MetaInfo
 }
 
 func CreateZettel(id zettel.Id, title string, text string, created time.Time) Zettel {
@@ -104,4 +105,8 @@ func (z *Zettel) Text() (string, error) {
 func (z *Zettel) SetText(t string) {
 	z.buf = bytes.NewBufferString(t)
 	z.pos = 0
+}
+
+func (z *Zettel) Metadata() (*zettel.MetaInfo, error) {
+	return &z.meta, nil
 }
