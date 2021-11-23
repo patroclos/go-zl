@@ -23,6 +23,11 @@ func NewStorage() storage.Storer {
 	}
 }
 
+func (zs *ZettelStorage) HasZettel(id z.Id) bool {
+	_, ok := zs.data[id]
+	return ok
+}
+
 func (zs *ZettelStorage) NewZettel(title string) z.Zettel {
 	zl := NewZettel(title)
 	zs.data[zl.id] = zl

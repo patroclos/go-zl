@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path"
 	"strings"
 	"time"
 
+	"gopkg.in/yaml.v2"
 	"jensch.works/zl/pkg/storage/memory"
 	z "jensch.works/zl/pkg/zettel"
 )
@@ -27,6 +29,12 @@ type Zettel struct {
 	memory.Zettel
 	s     *ZettelStorage
 	exist bool
+	Meta  *MetaInfo
+}
+
+func (zs *ZettelStorage) HasZettel(id z.Id) bool {
+	_, err := zs.Zettel(id)
+	return err == nil
 }
 
 func (zs *ZettelStorage) NewZettel(title string) z.Zettel {
@@ -63,11 +71,13 @@ var errNoTitle = errors.New("no title")
 
 func (zl *ZettelStorage) Zettel(id z.Id) (z.Zettel, error) {
 	readmePath := path.Join(zl.Directory, string(id), "README.md")
+	metaPath := path.Join(zl.Directory, string(id), "meta.yaml")
 
 	f, err := os.Open(readmePath)
 	if err != nil {
 		return nil, err
 	}
+	defer f.Close()
 
 	scn := bufio.NewScanner(f)
 	if !scn.Scan() {
@@ -89,15 +99,40 @@ func (zl *ZettelStorage) Zettel(id z.Id) (z.Zettel, error) {
 		return nil, err
 	}
 
+	var meta MetaInfo
+	f, err = os.Open(metaPath)
+
+	if err == nil {
+		bytes, err := ioutil.ReadAll(f)
+		if err == nil {
+			err = yaml.Unmarshal(bytes, &meta)
+			if err != nil {
+				log.Printf("Error reading meta of %s:\n%v", title, err)
+			}
+		}
+	}
+
 	model := memory.CreateZettel(id, title, strings.TrimLeft(string(rest), "\n"), time.Now())
 
 	zettel := Zettel{
 		Zettel: model,
 		s:      zl,
 		exist:  true,
+		Meta:   &meta,
 	}
 
 	return &zettel, nil
+}
+
+type MetaInfo struct {
+	Labels map[string]string
+	Link   *LinkInfo
+}
+
+type LinkInfo struct {
+	A   string `yaml:"from"`
+	B   string `yaml:"to"`
+	Ctx []string `yaml:"context"`
 }
 
 func (zs ZettelStorage) ForEach(fn func(z z.Zettel) error) error {

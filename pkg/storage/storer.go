@@ -18,6 +18,7 @@ type Storer interface {
 type ZettelStorer interface {
 	NewZettel(title string) z.Zettel
 	SetZettel(zettel z.Zettel) error
+	HasZettel(id z.Id) bool
 	Zettel(id z.Id) (z.Zettel, error)
 }
 
@@ -33,4 +34,17 @@ func All(iter ZettelIter) []z.Zettel {
 	})
 
 	return results
+}
+
+func AllChan(iter ZettelIter) <-chan z.Zettel {
+	ch := make(chan z.Zettel)
+	go func() {
+		defer close(ch)
+		iter.ForEach(func(zl z.Zettel) error{
+			ch <- zl
+			return nil
+		})
+	}()
+
+	return ch
 }
