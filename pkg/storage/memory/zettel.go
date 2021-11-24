@@ -4,26 +4,23 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"time"
 
 	"jensch.works/zl/pkg/zettel"
 )
 
 type Zettel struct {
 	id      zettel.Id
-	created time.Time
 	title   string
 	buf     *bytes.Buffer
 	pos     int
 	meta    zettel.MetaInfo
 }
 
-func CreateZettel(id zettel.Id, title string, text string, created time.Time) Zettel {
+func CreateZettel(id zettel.Id, title string, text string) Zettel {
 	return Zettel{
 		id:      id,
 		title:   title,
 		buf:     bytes.NewBufferString(text),
-		created: created,
 	}
 }
 
@@ -32,7 +29,6 @@ func NewZettel(title string) Zettel {
 		id:      generateId(),
 		title:   title,
 		buf:     bytes.NewBuffer(nil),
-		created: time.Now(),
 	}
 }
 
@@ -42,10 +38,6 @@ func (z *Zettel) Id() zettel.Id {
 
 func (z *Zettel) Title() string {
 	return z.title
-}
-
-func (z *Zettel) CreateTime() time.Time {
-	return z.created
 }
 
 func (z *Zettel) Read(p []byte) (int, error) {

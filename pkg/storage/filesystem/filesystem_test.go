@@ -2,11 +2,47 @@ package filesystem_test
 
 import (
 	"testing"
+	"time"
 
 	"jensch.works/zl/pkg/storage"
 	"jensch.works/zl/pkg/storage/filesystem"
 	"jensch.works/zl/pkg/zettel"
 )
+
+func TestTimeFromId(t *testing.T) {
+	T := time.Now()
+	format := "20060102-030405"
+	id := zettel.Id(T.Format(format))
+	parsed, err := filesystem.ParseTimeFromId(id)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if tf, pf := T.Format(format) ,parsed.Format(format); tf != pf {
+		t.Errorf("parsed equivalent of %s (%s), expected %s", pf, parsed.Format(time.RFC3339), tf)
+	}
+}
+
+func TestTimestampIdRead(t *testing.T) {
+	store := filesystem.ZettelStorage{
+		Directory: "testdata",
+	}
+
+	zl, err := store.Zettel("20210831-010203-suffix")
+	if err != nil {
+		t.Fatal(err)
+	}
+	meta, err := zl.Metadata()
+	if err != nil {
+		t.Fatal("Zettel contains no metadata", zl)
+	}
+
+	expected := time.Date(2021, 8, 31, 01, 02, 03, 0, time.Local)
+	if !meta.CreationTimestamp.Equal(expected) {
+		t.Error("expected equal", meta.CreationTimestamp, expected)
+	}
+}
 
 func TestHasZettel(t *testing.T) {
 	store := filesystem.ZettelStorage{

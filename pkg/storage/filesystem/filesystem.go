@@ -57,7 +57,7 @@ func (zl *ZettelStorage) SetZettel(z z.Zettel) error {
 		return err
 	}
 
-	md := fmt.Sprintf("%s\n\n%s", z.Title(), txt)
+	md := fmt.Sprintf("# %s\n\n%s", z.Title(), txt)
 	err = ioutil.WriteFile(path.Join(pz, "README.md"), []byte(md), 644)
 	if err != nil {
 		return err
@@ -67,6 +67,14 @@ func (zl *ZettelStorage) SetZettel(z z.Zettel) error {
 }
 
 var errNoTitle = errors.New("no title")
+
+func ParseTimeFromId(id z.Id) (time.Time, error) {
+	if len(id) < 15 {
+		return time.Now(), io.ErrShortBuffer
+	}
+	str := string(id)
+	return time.ParseInLocation("20060102-150405", str[:15], time.Local)
+}
 
 func (zl *ZettelStorage) Zettel(id z.Id) (z.Zettel, error) {
 	readmePath := path.Join(zl.Directory, string(id), "README.md")
@@ -111,7 +119,12 @@ func (zl *ZettelStorage) Zettel(id z.Id) (z.Zettel, error) {
 		}
 	}
 
-	model := memory.CreateZettel(id, title, strings.TrimLeft(string(rest), "\n"), time.Now())
+	ctime, err := ParseTimeFromId(id)
+	if err == nil {
+		meta.CreationTimestamp = ctime
+	}
+
+	model := memory.CreateZettel(id, title, strings.TrimLeft(string(rest), "\n"))
 	metap, err := model.Metadata()
 	if err != nil {
 		panic(err)

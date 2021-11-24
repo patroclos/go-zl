@@ -3,14 +3,13 @@ package zettel_test
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	"jensch.works/zl/pkg/storage/memory"
 	"jensch.works/zl/pkg/zettel"
 )
 
 func makeZettel(id string, title string, labels *map[string]string) zettel.Zettel {
-	zl := memory.CreateZettel(zettel.Id(id), title, "", time.Now())
+	zl := memory.CreateZettel(zettel.Id(id), title, "")
 	if meta, err := zl.Metadata(); err == nil && labels != nil {
 		*meta = zettel.MetaInfo{
 			Labels: *labels,

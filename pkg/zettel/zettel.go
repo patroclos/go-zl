@@ -4,7 +4,6 @@ import (
 	"io"
 	"regexp"
 	"strings"
-	"time"
 )
 
 type Id string
@@ -12,7 +11,6 @@ type Id string
 type Zettel interface {
 	Id() Id
 	Title() string
-	CreateTime() time.Time
 	Text() (string, error)
 	SetText(t string)
 	Metadata() (*MetaInfo, error)

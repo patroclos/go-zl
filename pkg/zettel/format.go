@@ -48,9 +48,11 @@ func toFormatData(zl Zettel) *formatData {
 	if meta, err := zl.Metadata(); err == nil {
 		data.Labels = meta.Labels
 		data.Link = meta.Link
+		data.CreateTime = meta.CreationTimestamp
 		
 		if meta.Link != nil {
 		}
 	}
 	return data
 }
+
