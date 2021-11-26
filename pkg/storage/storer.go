@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"io"
 
 	z "jensch.works/zl/pkg/zettel"
 )
@@ -16,10 +17,22 @@ type Storer interface {
 }
 
 type ZettelStorer interface {
+	Zetteler
 	NewZettel(title string) z.Zettel
 	SetZettel(zettel z.Zettel) error
 	HasZettel(id z.Id) bool
+}
+
+type Zetteler interface {
 	Zettel(id z.Id) (z.Zettel, error)
+}
+
+type emptyZettler struct{}
+
+var Empty = emptyZettler{}
+
+func (_ emptyZettler) Zettel(id z.Id) (z.Zettel, error) {
+	return nil, io.EOF
 }
 
 type ZettelIter interface {

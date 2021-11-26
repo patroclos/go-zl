@@ -41,6 +41,11 @@ func main() {
 	var frmt string
 	rootCmd.PersistentFlags().StringVarP(&frmt, "format", "f", "{{ .Id }}  {{ .Title }}", "zettel format string")
 
+	cmdNew := makeCmdNew()
+	cmdMake := makeCmdMake()
+	cmdBacklinks := makeCmdBacklinks()
+	cmdView := makeCmdView(st)
+
 	cmdGraph := &cobra.Command{
 		Use: "graph",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -151,21 +156,42 @@ func main() {
 			if err != nil {
 				return err
 			}
-			p := allPrompts[rand.Intn(len(allPrompts))]
-			fmt.Printf("Q. %s\nA. ", p.Q)
-			reader := bufio.NewReader(os.Stdin)
-			_, err = reader.ReadString('\n')
 
-			if err != nil {
-				return err
+			if len(allPrompts) == 0 {
+				return nil
 			}
 
-			fmt.Printf("A. %s\n", p.A)
-			return nil
+			for {
+				p := allPrompts[rand.Intn(len(allPrompts))]
+
+				switch pi := p.(type) {
+				case prompt.QAPrompt:
+					fmt.Printf("Q. %s\nA. ", pi.Q)
+					reader := bufio.NewReader(os.Stdin)
+					_, err = reader.ReadString('\n')
+
+					if err != nil {
+						return err
+					}
+
+					fmt.Printf("A. %s\n", pi.A)
+					return nil
+				case prompt.OmitPrompt:
+					fmt.Printf(pi.String())
+					return nil
+				default:
+					continue
+				}
+			}
+
 		},
 	}
 
+	rootCmd.AddCommand(&cmdMake)
+	rootCmd.AddCommand(&cmdNew)
+	rootCmd.AddCommand(&cmdBacklinks)
 	rootCmd.AddCommand(cmdList)
+	rootCmd.AddCommand(cmdView)
 	rootCmd.AddCommand(cmdEdit)
 	rootCmd.AddCommand(cmdGraph)
 	rootCmd.AddCommand(cmdPrompt)

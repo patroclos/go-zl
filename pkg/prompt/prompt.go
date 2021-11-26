@@ -3,6 +3,7 @@ package prompt
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"strings"
 )
 
@@ -10,16 +11,44 @@ import (
 // the existance of prompts puts pressure on a view-over-edit mentality to experience
 // properly embedded prompts.
 
-type EmbeddedPrompt struct {
-	Q     string
-	A     string
-	Omits map[string]string
+type QAPrompt struct {
+	Q string
+	A string
 }
 
-var example = EmbeddedPrompt{
-	Q: "What does the {{.animal}} say?",
-	A: "meow",
-	Omits: map[string]string{"animal": "fox"},
+func (p QAPrompt) String() string {
+	return fmt.Sprintf("Q.  %s\nA.  %s", p.Q, p.A)
+}
+
+type OmitPrompt struct {
+	Fragments []string
+	Holes     []Hole
+}
+
+func (p OmitPrompt) String() string {
+	sb := strings.Builder{}
+	for i, f := range p.Fragments {
+		sb.WriteString(f)
+
+		if len(p.Holes) > i {
+			sb.WriteString("{{")
+			sb.WriteString(p.Holes[i].Text)
+			sb.WriteString("}}")
+		}
+	}
+	return sb.String()
+}
+
+type Hole struct {
+	Text string
+}
+
+type Stringer interface {
+	String() string
+}
+
+type EmbeddedPrompt interface {
+	Stringer
 }
 
 func ExtractAll(txt string) []EmbeddedPrompt {
@@ -37,7 +66,7 @@ func ExtractAll(txt string) []EmbeddedPrompt {
 				continue
 			}
 
-			results = append(results, EmbeddedPrompt{
+			results = append(results, QAPrompt{
 				Q: q,
 				A: line[3:],
 			})
@@ -49,6 +78,36 @@ func ExtractAll(txt string) []EmbeddedPrompt {
 			q = line[3:]
 			continue
 		}
+
+		omit := OmitPrompt{
+			Fragments: make([]string, 0, 8),
+			Holes:     make([]Hole, 0, 8),
+		}
+
+		p := 0
+		for p < len(line) {
+
+			iopen := strings.Index(line[p:], "{{")
+			if iopen == -1 {
+				omit.Fragments = append(omit.Fragments, line[p:])
+				break
+			}
+			if iopen > -1 {
+				iclose := strings.Index(line[iopen:], "}}")
+
+				if iclose > -1 {
+					txt := line[p+iopen+2 : p+iopen+iclose]
+					omit.Fragments = append(omit.Fragments, line[p:p+iopen])
+					omit.Holes = append(omit.Holes, Hole{Text: txt})
+					p = p + iopen + iclose + 2
+				}
+			}
+		}
+
+		if len(omit.Holes) > 0 {
+			results = append(results, omit)
+		}
+
 	}
 	return results
 }

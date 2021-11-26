@@ -8,6 +8,8 @@ import (
 
 type Id string
 
+const InvalidId = Id("")
+
 type Zettel interface {
 	Id() Id
 	Title() string
