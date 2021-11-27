@@ -63,9 +63,13 @@ func (zs *ZettelStorage) ForEach(cb func(z.Zettel) error) error {
 
 const idCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
+var rng *rand.Rand = nil
+
 func generateId() z.Id {
 	t := time.Now()
-	rng := rand.New(rand.NewSource(t.UnixNano()))
+	if rng == nil {
+		rng = rand.New(rand.NewSource(t.UnixNano()))
+	}
 	rbuf := [12]byte{}
 	for i := 0; i < len(rbuf); i++ {
 		rbuf[i] = idCharset[rng.Intn(len(idCharset))]

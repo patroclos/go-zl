@@ -33,4 +33,9 @@ func TestZettelIO(t *testing.T) {
 	}
 }
 
-
+func BenchmarkStorageInsert(b *testing.B) {
+	st := memory.NewStorage()
+	for i := 0; i < b.N; i++ {
+		st.NewZettel("test")
+	}
+}
