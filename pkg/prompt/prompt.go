@@ -92,15 +92,25 @@ func ExtractAll(txt string) []EmbeddedPrompt {
 				omit.Fragments = append(omit.Fragments, line[p:])
 				break
 			}
-			if iopen > -1 {
-				iclose := strings.Index(line[iopen:], "}}")
+			iopen += p
+			iclose := strings.Index(line[iopen:], "}}")
 
-				if iclose > -1 {
-					txt := line[p+iopen+2 : p+iopen+iclose]
-					omit.Fragments = append(omit.Fragments, line[p:p+iopen])
-					omit.Holes = append(omit.Holes, Hole{Text: txt})
-					p = p + iopen + iclose + 2
-				}
+			if iclose == -1 {
+				break
+			}
+
+			iclose += iopen
+
+			if iopen+2 == iclose {
+				p = p + iclose
+				continue
+			}
+
+			if iclose > -1 {
+				txt := line[iopen+2 : iclose]
+				omit.Fragments = append(omit.Fragments, line[p:iopen])
+				omit.Holes = append(omit.Holes, Hole{Text: txt})
+				p = iclose + 2
 			}
 		}
 

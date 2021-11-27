@@ -41,7 +41,7 @@ func RunLabelspec(ls Labelspec, labels Labels) bool {
 		return !ls.Negated
 	}
 
-	if !ignoreVal && *val != ls.MatchValue {
+	if !ignoreVal && val != nil && *val != ls.MatchValue {
 		return ls.Negated
 	}
 
