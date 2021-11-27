@@ -53,7 +53,7 @@ func AllChan(iter ZettelIter) <-chan z.Zettel {
 	ch := make(chan z.Zettel)
 	go func() {
 		defer close(ch)
-		iter.ForEach(func(zl z.Zettel) error{
+		iter.ForEach(func(zl z.Zettel) error {
 			ch <- zl
 			return nil
 		})

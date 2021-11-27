@@ -2,8 +2,10 @@ package zettel
 
 import "time"
 
+type Labels map[string]string
+
 type MetaInfo struct {
-	Labels map[string]string
+	Labels Labels
 	Link   *LinkInfo `yaml:"link"`
 	CreationTimestamp time.Time
 }

@@ -33,18 +33,7 @@ func main() {
 		Directory: zlpath,
 	}
 
-	rootCmd := cobra.Command{
-		Use:   "zl",
-		Short: "Personal Knowledge Manager",
-	}
-
-	var frmt string
-	rootCmd.PersistentFlags().StringVarP(&frmt, "format", "f", "{{ .Id }}  {{ .Title }}", "zettel format string")
-
-	cmdNew := makeCmdNew()
-	cmdMake := makeCmdMake()
-	cmdBacklinks := makeCmdBacklinks()
-	cmdView := makeCmdView(st)
+	rootCmd, ctx := makeRootCommand(st)
 
 	cmdGraph := &cobra.Command{
 		Use: "graph",
@@ -67,9 +56,9 @@ func main() {
 		Run: func(cmd *cobra.Command, args []string) {
 			for _, zl := range storage.All(st) {
 				if wide {
-					frmt = zettel.DefaultWideFormat
+					ctx.template = zettel.DefaultWideFormat
 				}
-				txt, err := zettel.FormatZettel(zl, frmt)
+				txt, err := zettel.FormatZettel(zl, ctx.template)
 				if err != nil {
 					log.Println(err)
 					return
@@ -187,11 +176,7 @@ func main() {
 		},
 	}
 
-	rootCmd.AddCommand(&cmdMake)
-	rootCmd.AddCommand(&cmdNew)
-	rootCmd.AddCommand(&cmdBacklinks)
 	rootCmd.AddCommand(cmdList)
-	rootCmd.AddCommand(cmdView)
 	rootCmd.AddCommand(cmdEdit)
 	rootCmd.AddCommand(cmdGraph)
 	rootCmd.AddCommand(cmdPrompt)
