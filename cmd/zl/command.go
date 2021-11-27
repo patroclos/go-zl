@@ -6,6 +6,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"jensch.works/zl/cmd/zl/context"
+	"jensch.works/zl/cmd/zl/view"
 	"jensch.works/zl/pkg/storage"
 	"jensch.works/zl/pkg/zettel"
 	"jensch.works/zl/pkg/zettel/scan"
@@ -15,16 +17,11 @@ var (
 	defaultFormat = "* {{.Id}}  {{.Title}}"
 )
 
-type Context struct {
-	tmpl string
-	st       storage.Storer
-	labels   []zettel.Labelspec
-}
 
-func makeRootCommand(st storage.Storer) (*cobra.Command, *Context) {
-	ctx := &Context{
-		tmpl: defaultFormat,
-		st:       st,
+func makeRootCommand(st storage.Storer) (*cobra.Command, *context.Context) {
+	ctx := &context.Context{
+		Template: defaultFormat,
+		Store:    st,
 	}
 
 	labelspecs := make([]string, 0, 4)
@@ -42,19 +39,19 @@ func makeRootCommand(st storage.Storer) (*cobra.Command, *Context) {
 
 				specs = append(specs, *spec)
 			}
-			ctx.labels = specs
+			ctx.Labels = specs
 
 			return runRoot(cmd, ctx, args)
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&ctx.tmpl, "template", "t", defaultFormat, "Customize zettellist output")
+	cmd.PersistentFlags().StringVarP(&ctx.Template, "template", "t", defaultFormat, "Customize zettellist output")
 	cmd.Flags().StringSliceVarP(&labelspecs, "label", "l", nil, "Filter zettel against a labelspec")
 
 	cmd.AddCommand(makeCmdNew())
 	cmd.AddCommand(makeCmdMake())
 	cmd.AddCommand(makeCmdBacklinks())
-	cmd.AddCommand(makeCmdView(ctx))
+	cmd.AddCommand(view.MakeCommand(ctx))
 
 	return cmd, ctx
 }
@@ -64,7 +61,7 @@ func isTerminal() bool {
 	return (info.Mode() & os.ModeCharDevice) != 0
 }
 
-func labelFilter(ctx *Context, in <-chan zettel.Zettel) chan zettel.Zettel {
+func labelFilter(ctx *context.Context, in <-chan zettel.Zettel) chan zettel.Zettel {
 	ch := make(chan zettel.Zettel)
 	go func() {
 		defer close(ch)
@@ -75,7 +72,7 @@ func labelFilter(ctx *Context, in <-chan zettel.Zettel) chan zettel.Zettel {
 				continue
 			}
 
-			if zettel.RunSpecs(ctx.labels, meta.Labels) {
+			if zettel.RunSpecs(ctx.Labels, meta.Labels) {
 				ch <- x
 			}
 
@@ -84,22 +81,22 @@ func labelFilter(ctx *Context, in <-chan zettel.Zettel) chan zettel.Zettel {
 	return ch
 }
 
-func runRoot(cmd *cobra.Command, ctx *Context, args []string) error {
+func runRoot(cmd *cobra.Command, ctx *context.Context, args []string) error {
 	var stream <-chan zettel.Zettel
 	switch isTerminal() {
 	case true:
-		stream = storage.AllChan(ctx.st)
+		stream = storage.AllChan(ctx.Store)
 	case false:
-		scn := scan.ListScanner(ctx.st)
+		scn := scan.ListScanner(ctx.Store)
 		stream = scn.Scan(os.Stdin)
 	}
 
-	if len(ctx.labels) > 0 {
+	if len(ctx.Labels) > 0 {
 		stream = labelFilter(ctx, stream)
 	}
 
 	for x := range stream {
-		txt, err := zettel.Fmt(x, ctx.tmpl)
+		txt, err := zettel.Fmt(x, ctx.Template)
 		if err != nil {
 			log.Println(err)
 			continue

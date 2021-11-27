@@ -8,6 +8,7 @@ import (
 
 const (
 	DefaultWideFormat = `{{.Id}} {{range $k,$v := .Labels}}{{if eq $k "zl/inbox"}}📥 {{end}}{{end}} {{.Title}} {{ .Labels }}`
+	ListFormat = `* {{.Id}}  {{.Title}}`
 )
 
 type formatData struct {
@@ -23,6 +24,15 @@ type formatData struct {
 type inboxData struct {
 	Box string
 	Due time.Time
+}
+
+func MustFmt(zl Zettel, format string) string {
+	txt, err := Fmt(zl, format)
+	if err != nil {
+		panic(err)
+	}
+
+	return txt
 }
 
 func Fmt(in Zettel, format string) (string, error) {
