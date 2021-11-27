@@ -63,37 +63,41 @@ func isTerminal() bool {
 	return (info.Mode() & os.ModeCharDevice) != 0
 }
 
+func labelFilter(ctx *Context, in <-chan zettel.Zettel) chan zettel.Zettel {
+	ch := make(chan zettel.Zettel)
+	go func() {
+		defer close(ch)
+		for x := range in {
+			meta, err := x.Metadata()
+			if err != nil {
+				ch <- x
+				continue
+			}
+
+			if zettel.RunSpecs(ctx.labels, meta.Labels) {
+				ch <- x
+			}
+
+		}
+	}()
+	return ch
+}
+
 func runRoot(cmd *cobra.Command, ctx *Context, args []string) error {
-	var base <-chan zettel.Zettel
+	var stream <-chan zettel.Zettel
 	switch isTerminal() {
 	case true:
-		base = storage.AllChan(ctx.st)
+		stream = storage.AllChan(ctx.st)
 	case false:
 		scn := scan.ListScanner(ctx.st)
-		base = scn.Scan(os.Stdin)
+		stream = scn.Scan(os.Stdin)
 	}
 
 	if len(ctx.labels) > 0 {
-		b2 := make(chan zettel.Zettel)
-		old := base
-		go func(){
-			defer close(b2)
-			for x := range old {
-				meta, err := x.Metadata()
-				if err != nil {
-					b2 <- x
-					continue
-				}
-				if zettel.RunSpecs(ctx.labels, meta.Labels) {
-					b2 <- x
-				}
-			}
-		}()
-
-		base = b2
+		stream = labelFilter(ctx, stream)
 	}
 
-	for x := range base {
+	for x := range stream {
 		fmt.Printf("* %s  %s\n", x.Id(), x.Title())
 	}
 	return nil
