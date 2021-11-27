@@ -56,9 +56,9 @@ func main() {
 		Run: func(cmd *cobra.Command, args []string) {
 			for _, zl := range storage.All(st) {
 				if wide {
-					ctx.template = zettel.DefaultWideFormat
+					ctx.tmpl = zettel.DefaultWideFormat
 				}
-				txt, err := zettel.FormatZettel(zl, ctx.template)
+				txt, err := zettel.Fmt(zl, ctx.tmpl)
 				if err != nil {
 					log.Println(err)
 					return

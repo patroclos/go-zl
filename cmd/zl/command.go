@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -15,14 +16,14 @@ var (
 )
 
 type Context struct {
-	template string
+	tmpl string
 	st       storage.Storer
 	labels   []zettel.Labelspec
 }
 
 func makeRootCommand(st storage.Storer) (*cobra.Command, *Context) {
 	ctx := &Context{
-		template: defaultFormat,
+		tmpl: defaultFormat,
 		st:       st,
 	}
 
@@ -47,7 +48,7 @@ func makeRootCommand(st storage.Storer) (*cobra.Command, *Context) {
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&ctx.template, "template", "t", defaultFormat, "Customize zettellist output")
+	cmd.PersistentFlags().StringVarP(&ctx.tmpl, "template", "t", defaultFormat, "Customize zettellist output")
 	cmd.Flags().StringSliceVarP(&labelspecs, "label", "l", nil, "Filter zettel against a labelspec")
 
 	cmd.AddCommand(makeCmdNew())
@@ -98,7 +99,12 @@ func runRoot(cmd *cobra.Command, ctx *Context, args []string) error {
 	}
 
 	for x := range stream {
-		fmt.Printf("* %s  %s\n", x.Id(), x.Title())
+		txt, err := zettel.Fmt(x, ctx.tmpl)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		fmt.Println(txt)
 	}
 	return nil
 }

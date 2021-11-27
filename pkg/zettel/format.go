@@ -25,7 +25,7 @@ type inboxData struct {
 	Due time.Time
 }
 
-func FormatZettel(in Zettel, format string) (string, error) {
+func Fmt(in Zettel, format string) (string, error) {
 	zl := toFormatData(in)
 	tmpl, err := template.New("fmt").Parse(format)
 	if err != nil {

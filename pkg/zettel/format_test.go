@@ -27,13 +27,13 @@ var (
 
 func ExampleFormatZettel() {
 	zl := makeZettel("id1", "Zettel 1", &map[string]string{"zl/inbox": "default"})
-	msg, err := zettel.FormatZettel(zl, "{{.Id}} - {{.Title}}")
+	msg, err := zettel.Fmt(zl, "{{.Id}} - {{.Title}}")
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println(msg)
 
-	msg, err = zettel.FormatZettel(zl, zettel.DefaultWideFormat)
+	msg, err = zettel.Fmt(zl, zettel.DefaultWideFormat)
 	if err != nil {
 		panic(err)
 	}
@@ -48,7 +48,7 @@ func TestFormatWide(t *testing.T) {
 	fmt := zettel.DefaultWideFormat
 	expect := "z1 📥  Zettel One map[zl/inbox:default zl/taint:work]"
 
-	txt, err := zettel.FormatZettel(testZettel, fmt)
+	txt, err := zettel.Fmt(testZettel, fmt)
 	if err != nil {
 		t.Fatal(err)
 	}
