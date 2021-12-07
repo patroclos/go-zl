@@ -20,11 +20,11 @@ type ZettelStorer interface {
 	Zetteler
 	NewZettel(title string) z.Zettel
 	SetZettel(zettel z.Zettel) error
-	HasZettel(id z.Id) bool
 }
 
 type Zetteler interface {
 	Zettel(id z.Id) (z.Zettel, error)
+	HasZettel(id z.Id) bool
 }
 
 type emptyZettler struct{}
@@ -33,6 +33,9 @@ var Empty = emptyZettler{}
 
 func (_ emptyZettler) Zettel(id z.Id) (z.Zettel, error) {
 	return nil, io.EOF
+}
+func (_ emptyZettler) HasZettel(id z.Id) bool {
+	return false
 }
 
 type ZettelIter interface {

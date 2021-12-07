@@ -121,7 +121,7 @@ func (zl *ZettelStorage) Zettel(id z.Id) (z.Zettel, error) {
 
 	ctime, err := ParseTimeFromId(id)
 	if err == nil {
-		meta.CreationTimestamp = ctime
+		meta.CreateTime = ctime
 	}
 
 	model := memory.CreateZettel(id, title, strings.TrimLeft(string(rest), "\n"))
@@ -139,7 +139,6 @@ func (zl *ZettelStorage) Zettel(id z.Id) (z.Zettel, error) {
 
 	return &zettel, nil
 }
-
 
 func (zs ZettelStorage) ForEach(fn func(z z.Zettel) error) error {
 	files, err := ioutil.ReadDir(zs.Directory)

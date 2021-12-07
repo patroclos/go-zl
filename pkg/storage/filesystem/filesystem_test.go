@@ -19,7 +19,7 @@ func TestTimeFromId(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if tf, pf := T.Format(format) ,parsed.Format(format); tf != pf {
+	if tf, pf := T.Format(format), parsed.Format(format); tf != pf {
 		t.Errorf("parsed equivalent of %s (%s), expected %s", pf, parsed.Format(time.RFC3339), tf)
 	}
 }
@@ -39,8 +39,8 @@ func TestTimestampIdRead(t *testing.T) {
 	}
 
 	expected := time.Date(2021, 8, 31, 01, 02, 03, 0, time.Local)
-	if !meta.CreationTimestamp.Equal(expected) {
-		t.Error("expected equal", meta.CreationTimestamp, expected)
+	if !meta.CreateTime.Equal(expected) {
+		t.Error("expected equal", meta.CreateTime, expected)
 	}
 }
 
