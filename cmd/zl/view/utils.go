@@ -51,7 +51,7 @@ func pickOne(from []zettel.Zettel) (zettel.Zettel, error) {
 		return from[0], nil
 	default:
 		for i, zl := range from {
-			fmt.Fprintf(os.Stderr, "[%03d] %s\n", i+1, zettel.MustFmt(zl, zettel.ListFormat))
+			fmt.Fprintf(os.Stderr, "[%03d] %s\n", i+1, zettel.MustFmt(zl, "{{.CreateTime}}  {{.Title}}"))
 
 		}
 		fmt.Fprintf(os.Stderr, "Choice: ")

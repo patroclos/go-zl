@@ -16,7 +16,7 @@ import (
 	"github.com/goccy/go-graphviz"
 	"github.com/spf13/cobra"
 
-	"jensch.works/zl/pkg/graph"
+	"jensch.works/zl/pkg/graph/gviz"
 	"jensch.works/zl/pkg/prompt"
 	"jensch.works/zl/pkg/storage"
 	"jensch.works/zl/pkg/storage/filesystem"
@@ -35,13 +35,13 @@ func main() {
 
 	rootCmd, ctx := makeRootCommand(st)
 
-	cmdGraph := &cobra.Command{
+	_ = &cobra.Command{
 		Use: "graph",
 		Run: func(cmd *cobra.Command, args []string) {
 
 			gv := graphviz.New()
 			gv.SetLayout(graphviz.FDP)
-			graph, err := graph.Plot(gv, st)
+			graph, err := gviz.Plot(gv, st)
 			if err != nil {
 				log.Println(err)
 				return
@@ -122,7 +122,7 @@ func main() {
 		},
 	}
 
-	cmdPrompt := &cobra.Command{
+	_ = &cobra.Command{
 		Use: "prompt",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			allPrompts := make([]prompt.EmbeddedPrompt, 0, 256)
@@ -178,8 +178,8 @@ func main() {
 
 	rootCmd.AddCommand(cmdList)
 	rootCmd.AddCommand(cmdEdit)
-	rootCmd.AddCommand(cmdGraph)
-	rootCmd.AddCommand(cmdPrompt)
+	// rootCmd.AddCommand(cmdGraph)
+	// rootCmd.AddCommand(cmdPrompt)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)

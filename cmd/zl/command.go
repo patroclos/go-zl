@@ -17,7 +17,6 @@ var (
 	defaultFormat = "* {{.Id}}  {{.Title}}"
 )
 
-
 func makeRootCommand(st storage.Storer) (*cobra.Command, *context.Context) {
 	ctx := &context.Context{
 		Template: defaultFormat,
@@ -46,12 +45,14 @@ func makeRootCommand(st storage.Storer) (*cobra.Command, *context.Context) {
 	}
 
 	cmd.PersistentFlags().StringVarP(&ctx.Template, "template", "t", defaultFormat, "Customize zettellist output")
-	cmd.Flags().StringSliceVarP(&labelspecs, "label", "l", nil, "Filter zettel against a labelspec")
+	cmd.PersistentFlags().StringSliceVarP(&labelspecs, "label", "l", nil, "Filter zettel against a labelspec")
 
 	cmd.AddCommand(makeCmdNew())
 	cmd.AddCommand(makeCmdMake())
-	cmd.AddCommand(makeCmdBacklinks())
+	cmd.AddCommand(makeCmdBacklinks(ctx))
 	cmd.AddCommand(view.MakeCommand(ctx))
+	cmd.AddCommand(MakeGraphCommand(ctx))
+	cmd.AddCommand(MakePromptCommand(ctx))
 
 	return cmd, ctx
 }

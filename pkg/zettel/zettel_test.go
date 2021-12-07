@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"jensch.works/zl/pkg/zettel"
+	"jensch.works/zl/pkg/zettel/scan"
 )
 
 func TestRefParsing(t *testing.T) {
@@ -12,7 +13,7 @@ func TestRefParsing(t *testing.T) {
 * blub single space doesnt match
 Embedded [Second](id2/)
 `
-	refs := zettel.Refs(in)
+	refs := scan.Refs(in)
 
 	expectation := []zettel.Id{zettel.Id("id1"), zettel.Id("id2")}
 	for _, i := range expectation {

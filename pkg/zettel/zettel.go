@@ -1,10 +1,6 @@
 package zettel
 
-import (
-	"io"
-	"regexp"
-	"strings"
-)
+import "io"
 
 type Id string
 
@@ -20,22 +16,3 @@ type Zettel interface {
 	io.Writer
 	io.Seeker
 }
-
-func Refs(text string) []Id {
-	reg := regexp.MustCompile(`\[.+\]\((.+)\)`)
-	matches := reg.FindAllStringSubmatch(text, -1)
-	results := make([]Id, 0, 8)
-	for _, m := range matches {
-		id := strings.Trim(m[1], " /")
-		results = append(results, Id(id))
-	}
-	reg = regexp.MustCompile(`\* ([a-zA-Z0-9-]+)  .*`)
-	matches = reg.FindAllStringSubmatch(text, -1)
-	for _, m := range matches {
-		id := m[1]
-		results = append(results, Id(id))
-	}
-
-	return results
-}
-
