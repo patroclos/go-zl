@@ -103,12 +103,11 @@ func graphHandler(rw http.ResponseWriter, req *http.Request) {
 				if err != nil {
 					return
 				}
-				if !ok {
-					tn = NewNode(zlr)
-					nodes[t] = tn
-				}
 				if ok {
 					g.Links = append(g.Links, &GraLnk{Source: origin, Target: tn})
+				} else {
+					tn = NewNode(zlr)
+					nodes[t] = tn
 				}
 			}
 

@@ -7,18 +7,22 @@ import (
 )
 
 const (
-	DefaultWideFormat = `{{.Id}} {{range $k,$v := .Labels}}{{if eq $k "zl/inbox"}}📥 {{end}}{{end}} {{.Title}} {{ .Labels }}`
-	ListFormat        = `* {{.Id}}  {{.Title}}`
+	DefaultWideFormat      = `{{.Id}} {{range $k,$v := .Labels}}{{if eq $k "zl/inbox"}}📥 {{end}}{{end}} {{.Title}} {{ .Labels }}`
+	ListFormat             = `* {{.Id}}  {{.Title}}`
+	ListStatusFormat       = `* {{.Id}}  {{.Status}} {{.Title}}`
+	ListPrettyStatusFormat = `* {{.Id}}  {{.PrettyStatus}} {{.Title}}`
 )
 
 type formatData struct {
-	Id         string
-	Title      string
-	CreateTime time.Time
-	Text       string
-	Labels     map[string]string
-	Inbox      *inboxData
-	Link       *LinkInfo
+	Id           string
+	Title        string
+	CreateTime   time.Time
+	Text         string
+	Labels       map[string]string
+	Inbox        *inboxData
+	Link         *LinkInfo
+	Status       string
+	PrettyStatus string
 }
 
 type inboxData struct {
@@ -60,7 +64,9 @@ func toFormatData(zl Zettel) *formatData {
 		data.Link = meta.Link
 		data.CreateTime = meta.CreateTime
 
-		if meta.Link != nil {
+		if _, ok := meta.Labels["zl/inbox"]; ok {
+			data.Status = "I"
+			data.PrettyStatus = "📥"
 		}
 	}
 	return data

@@ -13,13 +13,9 @@ import (
 	"jensch.works/zl/pkg/zettel/scan"
 )
 
-var (
-	defaultFormat = "* {{.Id}}  {{.Title}}"
-)
-
 func makeRootCommand(st storage.Storer) (*cobra.Command, *context.Context) {
 	ctx := &context.Context{
-		Template: defaultFormat,
+		Template: zettel.ListPrettyStatusFormat,
 		Store:    st,
 	}
 
@@ -44,7 +40,7 @@ func makeRootCommand(st storage.Storer) (*cobra.Command, *context.Context) {
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&ctx.Template, "template", "t", defaultFormat, "Customize zettellist output")
+	cmd.PersistentFlags().StringVarP(&ctx.Template, "template", "t", zettel.ListPrettyStatusFormat, "Customize zettellist output")
 	cmd.PersistentFlags().StringSliceVarP(&labelspecs, "label", "l", nil, "Filter zettel against a labelspec")
 
 	cmd.AddCommand(makeCmdNew())
