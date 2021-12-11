@@ -1,6 +1,7 @@
 package zettel
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -10,8 +11,7 @@ link:
   from: AAA
   to: BBB`
 
-	mb := []byte(meta)
-	parsed, err := ParseMeta(mb)
+	parsed, err := ParseMeta(strings.NewReader(meta))
 	if err != nil {
 		t.Fatalf("Error parsing meta: %v", err)
 		return
@@ -35,8 +35,7 @@ link:
     aspect: something something
   to: BBB`
 
-	mb := []byte(meta)
-	parsed, err := ParseMeta(mb)
+	parsed, err := ParseMeta(strings.NewReader(meta))
 	if err != nil {
 		t.Fatalf("Error parsing meta: %v", err)
 		return

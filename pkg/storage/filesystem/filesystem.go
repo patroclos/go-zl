@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"strings"
 	"time"
 
-	"gopkg.in/yaml.v2"
 	"jensch.works/zl/pkg/storage/memory"
+	"jensch.works/zl/pkg/zettel"
 	z "jensch.works/zl/pkg/zettel"
 )
 
@@ -106,30 +105,27 @@ func (zl *ZettelStorage) Zettel(id z.Id) (z.Zettel, error) {
 		return nil, err
 	}
 
-	var meta z.MetaInfo
-	f, err = os.Open(metaPath)
-
-	if err == nil {
-		bytes, err := ioutil.ReadAll(f)
-		if err == nil {
-			err = yaml.Unmarshal(bytes, &meta)
-			if err != nil {
-				log.Printf("Error reading meta of %s:\n%v", title, err)
-			}
+	var meta *z.MetaInfo
+	if f, err := os.Open(metaPath); err == nil {
+		if m, err := zettel.ParseMeta(f); err == nil {
+			meta = m
+		} else {
+			goto postmeta
+		}
+		if ctime, err := ParseTimeFromId(id); err == nil {
+			meta.CreateTime = ctime
 		}
 	}
-
-	ctime, err := ParseTimeFromId(id)
-	if err == nil {
-		meta.CreateTime = ctime
-	}
+postmeta:
 
 	model := memory.CreateZettel(id, title, strings.TrimLeft(string(rest), "\n"))
 	metap, err := model.Metadata()
 	if err != nil {
 		panic(err)
 	}
-	*metap = meta
+	if meta != nil {
+		*metap = *meta
+	}
 
 	zettel := Zettel{
 		Zettel: model,

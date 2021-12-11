@@ -3,14 +3,12 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/spf13/cobra"
 	"jensch.works/zl/cmd/zl/context"
 	"jensch.works/zl/cmd/zl/view"
 	"jensch.works/zl/pkg/storage"
 	"jensch.works/zl/pkg/zettel"
-	"jensch.works/zl/pkg/zettel/scan"
 )
 
 func makeRootCommand(st storage.Storer) (*cobra.Command, *context.Context) {
@@ -53,11 +51,6 @@ func makeRootCommand(st storage.Storer) (*cobra.Command, *context.Context) {
 	return cmd, ctx
 }
 
-func isTerminal() bool {
-	info, _ := os.Stdin.Stat()
-	return (info.Mode() & os.ModeCharDevice) != 0
-}
-
 func labelFilter(ctx *context.Context, in <-chan zettel.Zettel) chan zettel.Zettel {
 	ch := make(chan zettel.Zettel)
 	go func() {
@@ -80,13 +73,7 @@ func labelFilter(ctx *context.Context, in <-chan zettel.Zettel) chan zettel.Zett
 
 func runRoot(cmd *cobra.Command, ctx *context.Context, args []string) error {
 	var stream <-chan zettel.Zettel
-	switch isTerminal() {
-	case true:
-		stream = storage.AllChan(ctx.Store)
-	case false:
-		scn := scan.ListScanner(ctx.Store)
-		stream = scn.Scan(os.Stdin)
-	}
+	stream = storage.AllChan(ctx.Store)
 
 	if len(ctx.Labels) > 0 {
 		stream = labelFilter(ctx, stream)

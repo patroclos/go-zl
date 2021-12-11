@@ -3,6 +3,8 @@ package zettel
 import (
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"time"
 
 	"gopkg.in/yaml.v2"
@@ -36,9 +38,15 @@ type metaDto struct {
 	CreateTime time.Time              `yaml:"crecreationTimestampationTimestamp"`
 }
 
-func ParseMeta(in []byte) (*MetaInfo, error) {
+// Must either return (non-nil, nil) or (nil, non-nil)
+func ParseMeta(r io.Reader) (*MetaInfo, error) {
+	in, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+
 	dto := new(metaDto)
-	err := yaml.Unmarshal(in, dto)
+	err = yaml.Unmarshal(in, dto)
 	if err != nil {
 		return nil, err
 	}
@@ -93,6 +101,14 @@ func _readLink(dto *metaDto, lnk *LinkInfo) error {
 			return fmt.Errorf(`%w: link["to"]["zet"] not a string: %#v`, ErrorFormat, m["zet"])
 		}
 		lnk.B = zet
+	}
+
+	if ctxa, ok := dto.Link["context"].([]interface{}); ok {
+		for _, c := range ctxa {
+			if str, ok := c.(string); ok {
+				lnk.Ctx = append(lnk.Ctx, str)
+			}
+		}
 	}
 
 	return nil
