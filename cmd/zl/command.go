@@ -1,9 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"log"
-
 	"github.com/spf13/cobra"
 	"jensch.works/zl/cmd/zl/context"
 	"jensch.works/zl/cmd/zl/view"
@@ -21,19 +18,20 @@ func makeRootCommand(st storage.Storer) (*cobra.Command, *context.Context) {
 	cmd := &cobra.Command{
 		Use:   "zl",
 		Short: "Personal Knowledge Jumpdrive",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			specs := []zettel.Labelspec{}
 			for _, ls := range labelspecs {
 				spec, err := zettel.ParseLabelspec(ls)
 				if err != nil {
-					fmt.Fprintln(cmd.ErrOrStderr(), err)
-					continue
+					return err
 				}
 
 				specs = append(specs, *spec)
 			}
 			ctx.Labels = specs
-
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
 			return runRoot(cmd, ctx, args)
 		},
 	}
@@ -43,6 +41,7 @@ func makeRootCommand(st storage.Storer) (*cobra.Command, *context.Context) {
 
 	cmd.AddCommand(makeCmdNew())
 	cmd.AddCommand(makeCmdMake())
+	cmd.AddCommand(makeCmdList(ctx))
 	cmd.AddCommand(makeCmdBacklinks(ctx))
 	cmd.AddCommand(view.MakeCommand(ctx))
 	cmd.AddCommand(MakeGraphCommand(ctx))
@@ -72,20 +71,5 @@ func labelFilter(ctx *context.Context, in <-chan zettel.Zettel) chan zettel.Zett
 }
 
 func runRoot(cmd *cobra.Command, ctx *context.Context, args []string) error {
-	var stream <-chan zettel.Zettel
-	stream = storage.AllChan(ctx.Store)
-
-	if len(ctx.Labels) > 0 {
-		stream = labelFilter(ctx, stream)
-	}
-
-	for x := range stream {
-		txt, err := zettel.Fmt(x, ctx.Template)
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		fmt.Println(txt)
-	}
-	return nil
+	return runList(ctx, cmd, args)
 }
