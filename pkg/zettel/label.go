@@ -11,6 +11,10 @@ var (
 	ErrInvalidSpecFormat = errors.New("invalid spec format")
 )
 
+type LabelsMatcher interface {
+	Match(Labels) bool
+}
+
 // Constraint for filtering knodes
 type Labelspec struct {
 	MatchLabel string
@@ -18,16 +22,16 @@ type Labelspec struct {
 	Negated    bool
 }
 
-func RunSpecs(specs []Labelspec, labels Labels) bool {
-	for _,spec := range specs {
-		if !RunLabelspec(spec, labels) {
+func RunSpecs(specs []LabelsMatcher, labels Labels) bool {
+	for _, spec := range specs {
+		if !spec.Match(labels) {
 			return false
 		}
 	}
 	return true
 }
 
-func RunLabelspec(ls Labelspec, labels Labels) bool {
+func (ls Labelspec) Match(labels Labels) bool {
 	ignoreVal := ls.MatchValue == ""
 	var val *string = nil
 	for k, v := range labels {

@@ -23,18 +23,18 @@ type ZettelStorer interface {
 }
 
 type Zetteler interface {
-	Zettel(id z.Id) (z.Zettel, error)
-	HasZettel(id z.Id) bool
+	Zettel(id string) (z.Zettel, error)
+	HasZettel(id string) bool
 }
 
 type emptyZettler struct{}
 
 var Empty = emptyZettler{}
 
-func (_ emptyZettler) Zettel(id z.Id) (z.Zettel, error) {
+func (_ emptyZettler) Zettel(id string) (z.Zettel, error) {
 	return nil, io.EOF
 }
-func (_ emptyZettler) HasZettel(id z.Id) bool {
+func (_ emptyZettler) HasZettel(id string) bool {
 	return false
 }
 

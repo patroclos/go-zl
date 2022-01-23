@@ -10,25 +10,25 @@ import (
 	"jensch.works/zl/pkg/zettel"
 )
 
-func Refs(text string) []zettel.Id {
+func Refs(text string) []string {
 	reg := regexp.MustCompile(`\[.+\]\((.+)\)`)
 	matches := reg.FindAllStringSubmatch(text, -1)
-	results := make([]zettel.Id, 0, 8)
+	results := make([]string, 0, 8)
 	for _, m := range matches {
 		id := strings.Trim(m[1], " /")
-		results = append(results, zettel.Id(id))
+		results = append(results, id)
 	}
 	reg = regexp.MustCompile(`\* ([a-zA-Z0-9-]+)  .*`)
 	matches = reg.FindAllStringSubmatch(text, -1)
 	for _, m := range matches {
 		id := m[1]
-		results = append(results, zettel.Id(id))
+		results = append(results, id)
 	}
 
 	return results
 }
 
-func Backrefs(to zettel.Id, st interface {
+func Backrefs(to string, st interface {
 	storage.ZettelIter
 	storage.Zetteler
 }) <-chan RefZet {
@@ -39,7 +39,7 @@ func Backrefs(to zettel.Id, st interface {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for zlr := range ListScanner(st).Scan(zet) {
+			for zlr := range ListScanner(st).Scan(zet.Reader()) {
 				if string(zlr.Id()) == string(to) {
 					ch <- RefZet{
 						Zettel: zet,
@@ -50,14 +50,14 @@ func Backrefs(to zettel.Id, st interface {
 				}
 			}
 
-			meta, err := zet.Metadata()
-			if err != nil || meta.Link == nil {
+			meta := zet.Metadata()
+			if meta.Link == nil {
 				return
 			}
 			lnk := meta.Link
 			switch string(to) {
 			case lnk.A:
-				b, errB := st.Zettel(zettel.Id(lnk.B))
+				b, errB := st.Zettel(lnk.B)
 				if errB != nil {
 					log.Printf("failed opening link.to zettel (%s) from %s: %v", lnk.B, zet.Id(), errB)
 					return
@@ -69,7 +69,7 @@ func Backrefs(to zettel.Id, st interface {
 				}
 
 			case lnk.B:
-				a, errA := st.Zettel(zettel.Id(lnk.A))
+				a, errA := st.Zettel(lnk.A)
 				if errA != nil {
 					log.Printf("failed opening link.from zettel (%s) from %s: %v", lnk.A, zet.Id(), errA)
 					return

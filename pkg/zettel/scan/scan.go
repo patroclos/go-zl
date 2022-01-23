@@ -41,7 +41,7 @@ func scan(c chan<- zettel.Zettel, st storage.Zetteler, r io.Reader) {
 		if len(fields) == 0 {
 			continue
 		}
-		id := zettel.Id(fields[0])
+		id := fields[0]
 
 		zl, err := st.Zettel(id)
 		if err != nil {

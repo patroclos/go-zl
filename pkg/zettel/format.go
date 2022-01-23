@@ -59,15 +59,14 @@ func toFormatData(zl Zettel) *formatData {
 		Id:    string(zl.Id()),
 		Title: zl.Title(),
 	}
-	if meta, err := zl.Metadata(); err == nil {
-		data.Labels = meta.Labels
-		data.Link = meta.Link
-		data.CreateTime = meta.CreateTime
+	meta := zl.Metadata()
+	data.Labels = meta.Labels
+	data.Link = meta.Link
+	data.CreateTime = meta.CreateTime
 
-		if _, ok := meta.Labels["zl/inbox"]; ok {
-			data.Status = "I"
-			data.PrettyStatus = "📥"
-		}
+	if _, ok := meta.Labels["zl/inbox"]; ok {
+		data.Status = "I"
+		data.PrettyStatus = "📥"
 	}
 	return data
 }

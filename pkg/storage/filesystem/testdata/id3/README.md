@@ -1,3 +1,0 @@
-# Third
-
-The last installment

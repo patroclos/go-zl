@@ -29,9 +29,6 @@ type LinkInfo struct {
 	Ctx []string `yaml:"context"`
 }
 
-// TODO: pros and cons of sugar representations? same key vs pluralization
-//	as far as im concerned pluralization is stupid, bc we need the "listen up,
-//	fully detailed" version to fit anywhere the shortform goes to encode k well
 type metaDto struct {
 	Labels     Labels                 `yaml:"labels"`
 	Link       map[string]interface{} `yaml:"link,omitempty"`

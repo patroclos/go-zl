@@ -1,3 +1,0 @@
-# First
-
-Numero uno, baby

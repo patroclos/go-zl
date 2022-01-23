@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/spf13/cobra"
 	"jensch.works/zl/cmd/zl/context"
-	"jensch.works/zl/cmd/zl/view"
 	"jensch.works/zl/pkg/storage"
 	"jensch.works/zl/pkg/zettel"
 )
@@ -39,37 +38,9 @@ func makeRootCommand(st storage.Storer) (*cobra.Command, *context.Context) {
 	cmd.PersistentFlags().StringVarP(&ctx.Template, "template", "t", zettel.ListPrettyStatusFormat, "Customize zettellist output")
 	cmd.PersistentFlags().StringSliceVarP(&labelspecs, "label", "l", nil, "Filter zettel against a labelspec")
 
-	cmd.AddCommand(makeCmdNew())
-	cmd.AddCommand(makeCmdMake())
-	cmd.AddCommand(makeCmdList(ctx))
-	cmd.AddCommand(makeCmdBacklinks(ctx))
-	cmd.AddCommand(view.MakeCommand(ctx))
-	cmd.AddCommand(MakeGraphCommand(ctx))
-	cmd.AddCommand(MakePromptCommand(ctx))
-
 	return cmd, ctx
 }
 
-func labelFilter(ctx *context.Context, in <-chan zettel.Zettel) chan zettel.Zettel {
-	ch := make(chan zettel.Zettel)
-	go func() {
-		defer close(ch)
-		for x := range in {
-			meta, err := x.Metadata()
-			if err != nil {
-				ch <- x
-				continue
-			}
-
-			if zettel.RunSpecs(ctx.Labels, meta.Labels) {
-				ch <- x
-			}
-
-		}
-	}()
-	return ch
-}
-
 func runRoot(cmd *cobra.Command, ctx *context.Context, args []string) error {
-	return runList(ctx, cmd, args)
+	return nil
 }

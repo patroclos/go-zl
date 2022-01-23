@@ -102,7 +102,7 @@ func TestParseLabelspec(t *testing.T) {
 
 func TestLabelSpec_Met(t *testing.T) {
 	spec := zettel.Labelspec{"zl/inbox", "default", false}
-	if !zettel.RunLabelspec(spec, zettel.Labels(map[string]string{"zl/inbox": "default"})) {
+	if !spec.Match(zettel.Labels(map[string]string{"zl/inbox": "default"})) {
 		t.Fatal("zl/inbox=default not met by zl/inbox: default")
 	}
 }
