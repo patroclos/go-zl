@@ -3,14 +3,12 @@ package main
 import (
 	"github.com/spf13/cobra"
 	"jensch.works/zl/cmd/zl/context"
-	"jensch.works/zl/pkg/storage"
 	"jensch.works/zl/pkg/zettel"
 )
 
-func makeRootCommand(st storage.Storer) (*cobra.Command, *context.Context) {
+func makeRootCommand() (*cobra.Command, *context.Context) {
 	ctx := &context.Context{
 		Template: zettel.ListPrettyStatusFormat,
-		Store:    st,
 	}
 
 	labelspecs := make([]string, 0, 4)

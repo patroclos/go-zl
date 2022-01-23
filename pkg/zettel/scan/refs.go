@@ -1,12 +1,9 @@
 package scan
 
 import (
-	"log"
 	"regexp"
 	"strings"
-	"sync"
 
-	"jensch.works/zl/pkg/storage"
 	"jensch.works/zl/pkg/zettel"
 )
 
@@ -26,70 +23,6 @@ func Refs(text string) []string {
 	}
 
 	return results
-}
-
-func Backrefs(to string, st interface {
-	storage.ZettelIter
-	storage.Zetteler
-}) <-chan RefZet {
-	ch := make(chan RefZet)
-	wg := new(sync.WaitGroup)
-	for zl := range storage.AllChan(st) {
-		zet := zl
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for zlr := range ListScanner(st).Scan(zet.Reader()) {
-				if string(zlr.Id()) == string(to) {
-					ch <- RefZet{
-						Zettel: zet,
-						txt:    "<pending>",
-						target: zlr,
-						link:   nil,
-					}
-				}
-			}
-
-			meta := zet.Metadata()
-			if meta.Link == nil {
-				return
-			}
-			lnk := meta.Link
-			switch string(to) {
-			case lnk.A:
-				b, errB := st.Zettel(lnk.B)
-				if errB != nil {
-					log.Printf("failed opening link.to zettel (%s) from %s: %v", lnk.B, zet.Id(), errB)
-					return
-				}
-				ch <- RefZet{
-					Zettel: zet,
-					txt:    zet.Title(),
-					target: b,
-				}
-
-			case lnk.B:
-				a, errA := st.Zettel(lnk.A)
-				if errA != nil {
-					log.Printf("failed opening link.from zettel (%s) from %s: %v", lnk.A, zet.Id(), errA)
-					return
-				}
-				ch <- RefZet{
-					Zettel: zet,
-					txt:    zet.Title(),
-					target: a,
-				}
-			default:
-				return
-			}
-		}()
-	}
-
-	go func() {
-		wg.Wait()
-		close(ch)
-	}()
-	return ch
 }
 
 type RefZet struct {

@@ -5,7 +5,6 @@ import (
 	"io"
 	"strings"
 
-	"jensch.works/zl/pkg/storage"
 	"jensch.works/zl/pkg/zettel"
 )
 
@@ -14,10 +13,10 @@ type Scanner interface {
 }
 
 type listScanner struct {
-	z storage.Zetteler
+	z Zettler
 }
 
-func ListScanner(z storage.Zetteler) Scanner {
+func ListScanner(z Zettler) Scanner {
 	return listScanner{
 		z: z,
 	}
@@ -29,7 +28,11 @@ func (p listScanner) Scan(r io.Reader) <-chan zettel.Zettel {
 	return c
 }
 
-func scan(c chan<- zettel.Zettel, st storage.Zetteler, r io.Reader) {
+type Zettler interface {
+	Zettel(id string) (zettel.Zettel, error)
+}
+
+func scan(c chan<- zettel.Zettel, st Zettler, r io.Reader) {
 	defer close(c)
 	scn := bufio.NewScanner(r)
 	for scn.Scan() {
