@@ -2,6 +2,8 @@ package storage
 
 import (
 	"fmt"
+	"io/ioutil"
+	"strings"
 	"testing"
 
 	"github.com/go-git/go-billy/v5"
@@ -51,12 +53,19 @@ func TestStore_Put(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	stat, err := dir.Lstat(fmt.Sprintf("%s/README.md", zl.Id()))
+	readme, err := dir.Open(fmt.Sprintf("%s/README.md", zl.Id()))
+	defer readme.Close()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if int(stat.Size()) != len(testContent) {
-		t.Errorf("unexpected README.md size %d, expected %d", stat.Size(), len(testContent))
+
+	bytes, _ := ioutil.ReadAll(readme)
+	got := string(bytes)
+
+	expect := fmt.Sprintf("# %s\n\n%s", testTitle, testContent)
+
+	if got != expect {
+		t.Errorf("get '%s', expected '%s'", got, expect)
 	}
 
 	log, _ := st.git.Log(&git.LogOptions{All: true})
@@ -66,6 +75,13 @@ func TestStore_Put(t *testing.T) {
 	}
 	_ = commit
 
+	if !strings.Contains(commit.Message, zl.Id()) {
+		t.Errorf("commit message didn't contain id: %s", commit.Message)
+	}
+
+	if !strings.Contains(commit.Message, zl.Title()) {
+		t.Errorf("commit message didn't contain title: %s", commit.Message)
+	}
 }
 
 const testTitle = "Hello, Grid!"
