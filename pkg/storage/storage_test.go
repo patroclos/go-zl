@@ -10,6 +10,7 @@ import (
 	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/cache"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/storage/filesystem"
 	"jensch.works/zl/pkg/zettel"
 )
@@ -43,17 +44,15 @@ func TestNewStore(t *testing.T) {
 	}
 }
 
-func TestStore_Put(t *testing.T) {
-	dir := memfs.New()
-	st, _ := NewStore(dir)
-
-	zl, _ := zettel.Construct(testZetConstructor)
+func TestStore_PutNew(t *testing.T) {
+	st, _ := NewStore(memfs.New())
+	zl, _ := zettel.Build(testZetConstructor)
 
 	if err := st.Put(zl); err != nil {
 		t.Fatal(err)
 	}
 
-	readme, err := dir.Open(fmt.Sprintf("%s/README.md", zl.Id()))
+	readme, err := st.dir.Open(fmt.Sprintf("%s/README.md", zl.Id()))
 	defer readme.Close()
 	if err != nil {
 		t.Fatal(err)
@@ -69,18 +68,52 @@ func TestStore_Put(t *testing.T) {
 	}
 
 	log, _ := st.git.Log(&git.LogOptions{All: true})
-	commit, err := log.Next()
-	if err != nil {
-		t.Fatal("no git commits")
+	commits := make([]*object.Commit, 0, 8)
+	for {
+		commit, err := log.Next()
+		if err != nil {
+			break
+		}
+		commits = append(commits, commit)
 	}
-	_ = commit
 
-	if !strings.Contains(commit.Message, zl.Id()) {
-		t.Errorf("commit message didn't contain id: %s", commit.Message)
+	if len(commits) != 1 {
+		t.Fatalf("expected 1 commit, got %d", len(commits))
 	}
 
-	if !strings.Contains(commit.Message, zl.Title()) {
-		t.Errorf("commit message didn't contain title: %s", commit.Message)
+	if !strings.Contains(commits[0].Message, zl.Id()) {
+		t.Errorf("commit message didn't contain id: %s", commits[0].Message)
+	}
+
+	if !strings.Contains(commits[0].Message, zl.Title()) {
+		t.Errorf("commit message didn't contain title: %s", commits[0].Message)
+	}
+}
+
+func TestStore_PutUpdate(t *testing.T) {
+	st, _ := NewStore(memfs.New())
+
+	zl, _ := zettel.Build(testZetConstructor)
+	altered, _ := zl.Rebuild(func(b zettel.Builder) error {
+		b.Text("all new text")
+		return nil
+	})
+
+	st.Put(zl)
+	st.Put(altered)
+
+	log, _ := st.git.Log(&git.LogOptions{All: true})
+	commits := make([]*object.Commit, 0, 8)
+	for {
+		commit, err := log.Next()
+		if err != nil {
+			break
+		}
+		commits = append(commits, commit)
+	}
+
+	if len(commits) != 2 {
+		t.Errorf("expected 2 commits, got %d", len(commits))
 	}
 }
 

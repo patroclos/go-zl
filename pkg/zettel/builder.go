@@ -12,7 +12,7 @@ type Builder interface {
 	Text(string)
 }
 
-func Construct(fn func(b Builder) error) (Zettel, error) {
+func Build(fn func(b Builder) error) (Zettel, error) {
 	b := newBuilder()
 
 	if err := fn(b); err != nil {
@@ -49,6 +49,10 @@ func (zb *zettelBuilder) Text(t string) {
 func (zb *zettelBuilder) Validate() error {
 	if len(zb.inner.id) == 0 {
 		return fmt.Errorf("no id")
+	}
+
+	if len(zb.inner.title) == 0 {
+		return fmt.Errorf("title empty")
 	}
 	if zb.inner.meta.CreateTime.IsZero() {
 		return fmt.Errorf("meta.CreateTime is zero")

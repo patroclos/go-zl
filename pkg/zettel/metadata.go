@@ -23,6 +23,20 @@ type MetaInfo struct {
 	CreateTime time.Time `yaml:"creationTimestamp"`
 }
 
+func (i *MetaInfo) copy(from MetaInfo) {
+	i.CreateTime = from.CreateTime
+	i.Labels = make(map[string]string)
+	for k, v := range from.Labels {
+		i.Labels[k] = v
+	}
+
+	if from.Link != nil {
+		i.Link = new(LinkInfo)
+		i.Link.A = from.Link.A
+		i.Link.A, i.Link.B, i.Link.Ctx = from.Link.A, from.Link.B, from.Link.Ctx
+	}
+}
+
 type LinkInfo struct {
 	A   string   `yaml:"from"`
 	B   string   `yaml:"to"`

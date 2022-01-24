@@ -63,11 +63,7 @@ func (zs *zetStore) Put(zl zettel.Zettel) error {
 		return fmt.Errorf("git worktree unclean")
 	}
 
-	if stat, err := zs.dir.Stat(id); err == nil {
-		if rmerr := zs.dir.Remove(id); rmerr != nil {
-			return fmt.Errorf("can't remove existing zettel (%#v): %w", stat, rmerr)
-		}
-	}
+	zs.dir.Remove(id)
 
 	if err := zs.dir.MkdirAll(id, 0); err != nil {
 		return fmt.Errorf("can't create zettel dir: %w", err)
