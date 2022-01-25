@@ -15,7 +15,11 @@ import (
 	"jensch.works/zl/pkg/zettel"
 )
 
-func NewStore(dir billy.Filesystem) (*zetStore, error) {
+func NewStore(dir billy.Filesystem) (zettel.Storage, error) {
+	return newStore(dir)
+}
+
+func newStore(dir billy.Filesystem) (*zetStore, error) {
 	dotGit, _ := dir.Chroot(".git")
 	gitStorage := filesystem.NewStorage(dotGit, cache.NewObjectLRUDefault())
 
@@ -50,6 +54,18 @@ func (zs *zetStore) Zettel(id string) (zettel.Zettel, error) {
 	}
 
 	return zettel.Read(id, chr)
+}
+
+func (zs *zetStore) Resolve(query string) (zettel.Zettel, error) {
+	if zl, err := zs.Zettel(query); err == nil {
+		return zl, nil
+	}
+
+	// TODO: match on filename (eg. resolving a full readme path to the zettel)
+	// TODO: match on strings.Contains(Title(), query)
+	// TODO: match on special queries like @last
+
+	return nil, fmt.Errorf("couldn't resolve %s", query)
 }
 
 func (zs *zetStore) Put(zl zettel.Zettel) error {

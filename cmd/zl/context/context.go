@@ -5,6 +5,7 @@ import (
 )
 
 type Context struct {
+	Store    zettel.Storage
 	Template string
 	Labels   []zettel.Labelspec
 }

@@ -36,7 +36,7 @@ func TestGitInit(t *testing.T) {
 
 func TestNewStore(t *testing.T) {
 	dir := memfs.New()
-	st, err := NewStore(dir)
+	st, err := newStore(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,7 +51,7 @@ func TestNewStore(t *testing.T) {
 }
 
 func TestStore_PutNew(t *testing.T) {
-	st, _ := NewStore(memfs.New())
+	st, _ := newStore(memfs.New())
 	zl, _ := zettel.Build(testZetConstructor)
 
 	if err := st.Put(zl); err != nil {
@@ -97,7 +97,7 @@ func TestStore_PutNew(t *testing.T) {
 }
 
 func TestStore_PutUpdate(t *testing.T) {
-	st, _ := NewStore(memfs.New())
+	st, _ := newStore(memfs.New())
 
 	zl, _ := zettel.Build(testZetConstructor)
 	altered, _ := zl.Rebuild(func(b zettel.Builder) error {

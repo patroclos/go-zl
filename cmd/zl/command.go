@@ -6,9 +6,10 @@ import (
 	"jensch.works/zl/pkg/zettel"
 )
 
-func makeRootCommand() (*cobra.Command, *context.Context) {
+func makeRootCommand(st zettel.Storage) (*cobra.Command, *context.Context) {
 	ctx := &context.Context{
 		Template: zettel.ListPrettyStatusFormat,
+		Store:    st,
 	}
 
 	labelspecs := make([]string, 0, 4)
