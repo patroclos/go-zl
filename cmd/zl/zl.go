@@ -36,15 +36,4 @@ func main() {
 		log.Println(err)
 	}
 	log.Println(resolved)
-
-	/*
-		rootCmd, ctx := makeRootCommand(st)
-		// rootCmd.AddCommand(cmdGraph)
-		// rootCmd.AddCommand(cmdPrompt)
-
-		if err := rootCmd.Execute(); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-	*/
 }
