@@ -2,6 +2,7 @@ package storage
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -14,6 +15,8 @@ import (
 	"gopkg.in/yaml.v2"
 	"jensch.works/zl/pkg/zettel"
 )
+
+var ErrAmbiguous = errors.New("ambiguous query")
 
 func NewStore(dir billy.Filesystem) (zettel.Storage, error) {
 	return newStore(dir)
@@ -61,8 +64,35 @@ func (zs *zetStore) Resolve(query string) (zettel.Zettel, error) {
 		return zl, nil
 	}
 
+	titleMatches := make([]zettel.Zettel, 0, 8)
+	infos, err := zs.dir.ReadDir("")
+	if err != nil {
+		return nil, err
+	}
+
+	for _, x := range infos {
+		if !x.IsDir() {
+			continue
+		}
+		ch, _ := zs.dir.Chroot(x.Name())
+		zet, err := zettel.Read(x.Name(), ch)
+		if err != nil {
+			continue
+		}
+
+		if strings.Contains(zet.Title(), query) {
+			titleMatches = append(titleMatches, zet)
+			continue
+		}
+	}
+	if len(titleMatches) != 0 {
+		var err error = nil
+		if len(titleMatches) > 1 {
+			err = ErrAmbiguous
+		}
+		return titleMatches[0], err
+	}
 	// TODO: match on filename (eg. resolving a full readme path to the zettel)
-	// TODO: match on strings.Contains(Title(), query)
 	// TODO: match on special queries like @last
 
 	return nil, fmt.Errorf("couldn't resolve %s", query)

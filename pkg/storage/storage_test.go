@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"strings"
@@ -135,6 +136,36 @@ func TestStore_PutUpdate(t *testing.T) {
 
 	if got.Id() != zl.Id() {
 		t.Fatal("id mismatch")
+	}
+}
+
+// TODO: match on filename (eg. resolving a full readme path to the zettel)
+// TODO: match on special queries like @last
+func TestStoreResolveUnambiguous(t *testing.T) {
+	st, _ := NewStore(memfs.New())
+
+	zl, _ := zettel.Build(testZetConstructor)
+	zl2, _ := zettel.Build(testZetConstructor)
+	zl2, _ = zl2.Rebuild(func(b zettel.Builder) error {
+		b.Title("Hello, foo!")
+		return nil
+	})
+
+	st.Put(zl)
+	st.Put(zl2)
+
+	shouldMatch := []string{zl.Id(), zl2.Id(), "Grid", "foo"}
+
+	for _, x := range shouldMatch {
+		_, err := st.Resolve(x)
+		if err != nil {
+			t.Error(err)
+		}
+	}
+
+	_, err := st.Resolve("Hello")
+	if !errors.Is(err, ErrAmbiguous) {
+		t.Errorf("expected ErrAmbiguous, got %v", err)
 	}
 }
 
