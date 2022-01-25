@@ -15,7 +15,7 @@ var rng *rand.Rand
 func generateId(rng *rand.Rand) string {
 	buf := [idLen]byte{}
 	for i := 0; i < idLen; i++ {
-		buf[i] = idCharset[rng.Intn(idLen)]
+		buf[i] = idCharset[rng.Intn(len(idCharset))]
 	}
 	return string(buf[:])
 }

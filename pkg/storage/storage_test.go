@@ -154,7 +154,7 @@ func TestStoreResolveUnambiguous(t *testing.T) {
 	st.Put(zl)
 	st.Put(zl2)
 
-	shouldMatch := []string{zl.Id(), zl2.Id(), "Grid", "foo"}
+	shouldMatch := []string{zl.Id(), zl.Id()[:4], zl2.Id(), "Grid", "foo"}
 
 	for _, x := range shouldMatch {
 		_, err := st.Resolve(x)

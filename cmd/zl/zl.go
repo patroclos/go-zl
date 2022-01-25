@@ -32,6 +32,9 @@ func main() {
 	}
 
 	resolved, err := store.Resolve(query)
+	if err != nil {
+		log.Println(err)
+	}
 	log.Println(resolved)
 
 	/*

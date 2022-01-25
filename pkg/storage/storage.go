@@ -74,13 +74,14 @@ func (zs *zetStore) Resolve(query string) (zettel.Zettel, error) {
 		if !x.IsDir() {
 			continue
 		}
-		ch, _ := zs.dir.Chroot(x.Name())
-		zet, err := zettel.Read(x.Name(), ch)
+		id := x.Name()
+		ch, _ := zs.dir.Chroot(id)
+		zet, err := zettel.Read(id, ch)
 		if err != nil {
 			continue
 		}
 
-		if strings.Contains(zet.Title(), query) {
+		if strings.Contains(fmt.Sprintf("%s  %s", id, zet.Title()), query) {
 			titleMatches = append(titleMatches, zet)
 			continue
 		}
@@ -92,8 +93,6 @@ func (zs *zetStore) Resolve(query string) (zettel.Zettel, error) {
 		}
 		return titleMatches[0], err
 	}
-	// TODO: match on filename (eg. resolving a full readme path to the zettel)
-	// TODO: match on special queries like @last
 
 	return nil, fmt.Errorf("couldn't resolve %s", query)
 }
