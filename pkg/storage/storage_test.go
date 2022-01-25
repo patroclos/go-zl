@@ -15,6 +15,12 @@ import (
 	"jensch.works/zl/pkg/zettel"
 )
 
+func TestStoreType(t *testing.T) {
+	dir := memfs.New()
+	x, _ := NewStore(dir)
+	var _ zettel.Storage = x
+}
+
 func TestGitInit(t *testing.T) {
 	var wt, dot billy.Filesystem
 	wt = memfs.New()
@@ -114,6 +120,21 @@ func TestStore_PutUpdate(t *testing.T) {
 
 	if len(commits) != 2 {
 		t.Errorf("expected 2 commits, got %d", len(commits))
+	}
+
+	st2, _ := NewStore(st.dir)
+	got, err := st2.Zettel(zl.Id())
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got == nil {
+		t.Fatal("Zettel returned nil")
+	}
+
+	if got.Id() != zl.Id() {
+		t.Fatal("id mismatch")
 	}
 }
 

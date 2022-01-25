@@ -46,7 +46,7 @@ type LinkInfo struct {
 type metaDto struct {
 	Labels     Labels                 `yaml:"labels"`
 	Link       map[string]interface{} `yaml:"link,omitempty"`
-	CreateTime time.Time              `yaml:"crecreationTimestampationTimestamp"`
+	CreateTime time.Time              `yaml:"creationTimestamp"`
 }
 
 // Must either return (non-nil, nil) or (nil, non-nil)

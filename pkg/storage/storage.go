@@ -15,12 +15,6 @@ import (
 	"jensch.works/zl/pkg/zettel"
 )
 
-type zetStore struct {
-	dir billy.Filesystem
-	git *git.Repository
-	rw  *sync.RWMutex
-}
-
 func NewStore(dir billy.Filesystem) (*zetStore, error) {
 	dotGit, _ := dir.Chroot(".git")
 	gitStorage := filesystem.NewStorage(dotGit, cache.NewObjectLRUDefault())
@@ -41,6 +35,21 @@ func NewStore(dir billy.Filesystem) (*zetStore, error) {
 	}
 
 	return st, nil
+}
+
+type zetStore struct {
+	dir billy.Filesystem
+	git *git.Repository
+	rw  *sync.RWMutex
+}
+
+func (zs *zetStore) Zettel(id string) (zettel.Zettel, error) {
+	chr, err := zs.dir.Chroot(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return zettel.Read(id, chr)
 }
 
 func (zs *zetStore) Put(zl zettel.Zettel) error {

@@ -1,6 +1,14 @@
 package zettel
 
-import "io"
+import (
+	"bufio"
+	"bytes"
+	"fmt"
+	"io"
+	"strings"
+
+	"github.com/go-git/go-billy/v5"
+)
 
 type Zettel interface {
 	Id() string
@@ -8,6 +16,58 @@ type Zettel interface {
 	Metadata() *MetaInfo
 	Reader() io.Reader
 	Rebuild(fn func(Builder) error) (Zettel, error)
+}
+
+func Read(id string, zd billy.Filesystem) (Zettel, error) {
+	f, err := zd.Open("README.md")
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	title, err := scanTitle(f)
+	if err != nil {
+		return nil, err
+	}
+
+	buf, err := io.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
+
+	f, err = zd.Open("meta.yaml")
+	if err != nil {
+		return nil, err
+	}
+
+	meta, err := ParseMeta(f)
+	if err != nil {
+		return nil, err
+	}
+
+	z := &zet{
+		id:    id,
+		title: title,
+		meta:  *meta,
+		read: func() io.Reader {
+			return bytes.NewReader(buf)
+		},
+	}
+	return z, nil
+}
+
+func scanTitle(r io.Reader) (string, error) {
+	scn := bufio.NewScanner(r)
+	if !scn.Scan() {
+		if err := scn.Err(); err != nil {
+			return "", err
+		}
+		return "", fmt.Errorf("no title")
+	}
+
+	title := strings.TrimPrefix(scn.Text(), "# ")
+
+	return title, nil
 }
 
 type zet struct {
