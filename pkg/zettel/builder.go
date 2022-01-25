@@ -32,18 +32,22 @@ func newBuilder() *zettelBuilder {
 	b := &zettelBuilder{}
 	b.inner.meta.CreateTime = time.Now()
 	b.inner.id = plainGenerateId()
-	b.Text("")
 
 	return b
 }
 
-func (zb *zettelBuilder) Title(t string)      { zb.inner.title = t }
-func (zb *zettelBuilder) Metadata() *MetaInfo { return &zb.inner.meta }
+func (zb *zettelBuilder) Title(t string) {
+	zb.inner.title = t
+}
 
 func (zb *zettelBuilder) Text(t string) {
 	zb.inner.read = func() io.Reader {
 		return strings.NewReader(t)
 	}
+}
+
+func (zb *zettelBuilder) Metadata() *MetaInfo {
+	return &zb.inner.meta
 }
 
 func (zb *zettelBuilder) Validate() error {
