@@ -2,7 +2,6 @@ package zettel
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"io"
 	"strings"
@@ -18,6 +17,11 @@ type Zettel interface {
 	Rebuild(fn func(Builder) error) (Zettel, error)
 }
 
+type Readme struct {
+	Title string
+	Text  string
+}
+
 func Read(id string, zd billy.Filesystem) (Zettel, error) {
 	f, err := zd.Open("README.md")
 	if err != nil {
@@ -25,12 +29,7 @@ func Read(id string, zd billy.Filesystem) (Zettel, error) {
 	}
 	defer f.Close()
 
-	title, err := scanTitle(f)
-	if err != nil {
-		return nil, err
-	}
-
-	buf, err := io.ReadAll(f)
+	readme, err := ParseReadme(f)
 	if err != nil {
 		return nil, err
 	}
@@ -47,16 +46,31 @@ func Read(id string, zd billy.Filesystem) (Zettel, error) {
 
 	z := &zet{
 		id:    id,
-		title: title,
+		title: readme.Title,
 		meta:  *meta,
 		read: func() io.Reader {
-			return bytes.NewReader(buf)
+			return strings.NewReader(readme.Text)
 		},
 	}
 	return z, nil
 }
 
-func scanTitle(r io.Reader) (string, error) {
+func ParseReadme(r io.ReadSeeker) (*Readme, error) {
+	title, err := scanTitle(r)
+	if err != nil {
+		return nil, err
+	}
+
+	buf, err := io.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+	txt := strings.TrimLeft(string(buf), "\n")
+
+	return &Readme{Text: txt, Title: title}, nil
+}
+
+func scanTitle(r io.ReadSeeker) (string, error) {
 	scn := bufio.NewScanner(r)
 	if !scn.Scan() {
 		if err := scn.Err(); err != nil {
@@ -65,7 +79,9 @@ func scanTitle(r io.Reader) (string, error) {
 		return "", fmt.Errorf("no title")
 	}
 
-	title := strings.TrimPrefix(scn.Text(), "# ")
+	txt := scn.Text()
+	r.Seek(int64(len(txt)), io.SeekStart)
+	title := strings.TrimPrefix(txt, "# ")
 
 	return title, nil
 }

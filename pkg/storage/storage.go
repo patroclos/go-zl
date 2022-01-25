@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
+	"io/ioutil"
 	"strings"
 	"sync"
 
@@ -57,6 +59,67 @@ func (zs *zetStore) Zettel(id string) (zettel.Zettel, error) {
 	}
 
 	return zettel.Read(id, chr)
+}
+
+type iter struct {
+	dir     billy.Filesystem
+	files   []fs.FileInfo
+	current zettel.Zettel
+}
+
+func (i *iter) Next() bool {
+	if i.files == nil {
+		files, err := i.dir.ReadDir("")
+		if err != nil {
+			return false
+		}
+		i.files = files
+	}
+
+	if len(i.files) == 0 {
+		return false
+	}
+
+	var x fs.FileInfo = nil
+	for len(i.files) > 0 {
+		a, xs := i.files[0], i.files[1:]
+		i.files = xs
+
+		if a.IsDir() {
+			x = a
+			break
+		}
+	}
+
+	if x == nil {
+		return false
+	}
+
+	zroot, err := i.dir.Chroot(x.Name())
+	if err != nil {
+		// log.Println(err, x.Name())
+		return i.Next()
+	}
+	zet, err := zettel.Read(x.Name(), zroot)
+	if err != nil {
+		// log.Println(err, x.Name())
+		return i.Next()
+	}
+
+	i.current = zet
+
+	return true
+}
+
+func (i *iter) Zet() zettel.Zettel {
+	if i.current == nil {
+		panic("you are cringe")
+	}
+	return i.current
+}
+
+func (zs *zetStore) Iter() zettel.Iterator {
+	return &iter{dir: zs.dir}
 }
 
 func (zs *zetStore) Resolve(query string) (zettel.Zettel, error) {
@@ -149,14 +212,17 @@ func writeReadme(zs *zetStore, zl zettel.Zettel) error {
 	if r == nil {
 		return fmt.Errorf("reader is nil")
 	}
+	txt, err := ioutil.ReadAll(r)
+	if err != nil {
+		return err
+	}
 
 	path := zs.dir.Join(id, "README.md")
 	readme, err := zs.dir.Create(path)
 	if err != nil {
 		return fmt.Errorf("failed creating %s: %w", path, err)
 	}
-
-	io.Copy(readme, strings.NewReader(fmt.Sprintf("# %s\n\n", zl.Title())))
+	fmt.Fprintf(readme, "# %s\n\n%s", zl.Title(), txt)
 	defer readme.Close()
 	_, err = io.Copy(readme, r)
 	if err != nil {

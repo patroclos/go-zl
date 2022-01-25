@@ -1,6 +1,9 @@
 package zettel
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestZetType(t *testing.T) {
 	zl := &zet{}
@@ -13,6 +16,24 @@ func fooBuilder(b Builder) error {
 
 	b.Text("foo\n\n* foo\n* foo\n    * foo")
 	return nil
+}
+
+func TestParseReadme(t *testing.T) {
+	rm := `# my cool title
+
+my cool content`
+
+	x, err := ParseReadme(strings.NewReader(rm))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if x.Title != "my cool title" {
+		t.Errorf("expected title 'my cool title', got '%s'", x.Title)
+	}
+	if x.Text != "my cool content" {
+		t.Errorf("expected text 'my cool text', got '%s'", x.Text)
+	}
 }
 
 func TestBuildErrEmptyTitle(t *testing.T) {
