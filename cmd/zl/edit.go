@@ -26,6 +26,9 @@ func pickOne(zets []zettel.Zettel) (zettel.Zettel, error) {
 	if len(zets) == 0 {
 		return nil, fmt.Errorf("no zettels to pick")
 	}
+	if len(zets) == 1 {
+		return zets[0], nil
+	}
 	for i, z := range zets {
 		fmt.Printf("[%d]: %s  %s\n", i+1, z.Id(), z.Title())
 	}
