@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"strings"
@@ -141,7 +140,7 @@ func TestStore_PutUpdate(t *testing.T) {
 
 // TODO: match on filename (eg. resolving a full readme path to the zettel)
 // TODO: match on special queries like @last
-func TestStoreResolveUnambiguous(t *testing.T) {
+func TestStoreResolve(t *testing.T) {
 	st, _ := NewStore(memfs.New())
 
 	zl, _ := zettel.Build(testZetConstructor)
@@ -163,9 +162,12 @@ func TestStoreResolveUnambiguous(t *testing.T) {
 		}
 	}
 
-	_, err := st.Resolve("Hello")
-	if !errors.Is(err, ErrAmbiguous) {
-		t.Errorf("expected ErrAmbiguous, got %v", err)
+	got, err := st.Resolve("Hello")
+	if err != nil {
+		t.Error(err)
+	}
+	if len(got) != 2 {
+		t.Errorf("expected 2 matches, got %d", len(got))
 	}
 }
 

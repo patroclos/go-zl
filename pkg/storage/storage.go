@@ -2,7 +2,6 @@ package storage
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -17,8 +16,6 @@ import (
 	"gopkg.in/yaml.v2"
 	"jensch.works/zl/pkg/zettel"
 )
-
-var ErrAmbiguous = errors.New("ambiguous query")
 
 func NewStore(dir billy.Filesystem) (zettel.Storage, error) {
 	return newStore(dir)
@@ -122,9 +119,9 @@ func (zs *zetStore) Iter() zettel.Iterator {
 	return &iter{dir: zs.dir}
 }
 
-func (zs *zetStore) Resolve(query string) (zettel.Zettel, error) {
+func (zs *zetStore) Resolve(query string) ([]zettel.Zettel, error) {
 	if zl, err := zs.Zettel(query); err == nil {
-		return zl, nil
+		return []zettel.Zettel{zl}, nil
 	}
 
 	titleMatches := make([]zettel.Zettel, 0, 8)
@@ -150,11 +147,7 @@ func (zs *zetStore) Resolve(query string) (zettel.Zettel, error) {
 		}
 	}
 	if len(titleMatches) != 0 {
-		var err error = nil
-		if len(titleMatches) > 1 {
-			err = ErrAmbiguous
-		}
-		return titleMatches[0], err
+		return titleMatches, nil
 	}
 
 	return nil, fmt.Errorf("couldn't resolve %s", query)

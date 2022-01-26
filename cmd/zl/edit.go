@@ -21,10 +21,36 @@ type cmdEdit struct {
 func (c cmdEdit) Help() string {
 	return fmt.Sprintf("Opens a zettel for editing, creating a new git commit")
 }
+
+func pickOne(zets []zettel.Zettel) (zettel.Zettel, error) {
+	if len(zets) == 0 {
+		return nil, fmt.Errorf("no zettels to pick")
+	}
+	for i, z := range zets {
+		fmt.Printf("[%d]: %s  %s\n", i+1, z.Id(), z.Title())
+	}
+
+	var idx int
+	_, err := fmt.Scanln(&idx)
+	if err != nil {
+		return nil, err
+	}
+
+	if idx--; idx < 0 || idx >= len(zets) {
+		return nil, fmt.Errorf("invalid index")
+	}
+	return zets[idx], nil
+}
+
 func (c cmdEdit) Run(args []string) int {
-	zl, err := c.ctx.Store.Resolve(strings.Join(args, " "))
+	zets, err := c.ctx.Store.Resolve(strings.Join(args, " "))
 	if err != nil {
 		log.Fatal(err)
+	}
+	zl, err := pickOne(zets)
+	if err != nil {
+		log.Println(err)
+		zl = zets[0]
 	}
 
 	txt, err := ioutil.ReadAll(zl.Reader())

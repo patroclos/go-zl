@@ -9,7 +9,8 @@ type Putter interface {
 }
 
 type Resolver interface {
-	Resolve(query string) (Zettel, error)
+	// Find a non-empty []Zettel matching the given query
+	Resolve(query string) ([]Zettel, error)
 }
 
 type Iterator interface {
