@@ -23,10 +23,10 @@ func (c cmdEdit) Help() string {
 }
 
 func pickOne(zets []zettel.Zettel) (zettel.Zettel, error) {
-	if len(zets) == 0 {
+	switch len(zets) {
+	case 0:
 		return nil, fmt.Errorf("no zettels to pick")
-	}
-	if len(zets) == 1 {
+	case 1:
 		return zets[0], nil
 	}
 	for i, z := range zets {
@@ -52,8 +52,7 @@ func (c cmdEdit) Run(args []string) int {
 	}
 	zl, err := pickOne(zets)
 	if err != nil {
-		log.Println(err)
-		zl = zets[0]
+		log.Fatal(err)
 	}
 
 	txt, err := ioutil.ReadAll(zl.Reader())
