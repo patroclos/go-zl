@@ -91,7 +91,7 @@ func TestStore_PutNew(t *testing.T) {
 		t.Errorf("commit message didn't contain id: %s", commits[0].Message)
 	}
 
-	if !strings.Contains(commits[0].Message, zl.Title()) {
+	if !strings.Contains(commits[0].Message, zl.Readme().Title) {
 		t.Errorf("commit message didn't contain title: %s", commits[0].Message)
 	}
 }

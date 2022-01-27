@@ -29,6 +29,13 @@ func main() {
 	c := cli.NewCLI("zl", "0.1.0")
 	c.Args = os.Args[1:]
 	c.Commands = map[string]cli.CommandFactory{
+		"new": func() (cli.Command, error) {
+			return cmdNew{
+				ctx: &context.Context{
+					Store: store,
+				},
+			}, nil
+		},
 		"edit": func() (cli.Command, error) {
 			return cmdEdit{
 				ctx: &context.Context{

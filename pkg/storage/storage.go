@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"strings"
 	"sync"
 
@@ -141,7 +140,7 @@ func (zs *zetStore) Resolve(query string) ([]zettel.Zettel, error) {
 			continue
 		}
 
-		if strings.Contains(fmt.Sprintf("%s  %s", id, zet.Title()), query) {
+		if strings.Contains(fmt.Sprintf("%s  %s", id, zet.Readme().Title), query) {
 			titleMatches = append(titleMatches, zet)
 			continue
 		}
@@ -192,7 +191,7 @@ func (zs *zetStore) Put(zl zettel.Zettel) error {
 		return err
 	}
 
-	_, err = tree.Commit(fmt.Sprintf("put %s  %s", id, zl.Title()), &git.CommitOptions{})
+	_, err = tree.Commit(fmt.Sprintf("put %s  %s", id, zl.Readme().Title), &git.CommitOptions{})
 	if err != nil {
 		return err
 	}
@@ -201,23 +200,16 @@ func (zs *zetStore) Put(zl zettel.Zettel) error {
 }
 
 func writeReadme(zs *zetStore, zl zettel.Zettel) error {
-	id, r := zl.Id(), zl.Reader()
-	if r == nil {
-		return fmt.Errorf("reader is nil")
-	}
-	txt, err := ioutil.ReadAll(r)
-	if err != nil {
-		return err
-	}
+	id, rreadme := zl.Id(), zl.Readme()
 
 	path := zs.dir.Join(id, "README.md")
-	readme, err := zs.dir.Create(path)
+	fReadme, err := zs.dir.Create(path)
+	defer fReadme.Close()
 	if err != nil {
 		return fmt.Errorf("failed creating %s: %w", path, err)
 	}
-	fmt.Fprintf(readme, "# %s\n\n%s", zl.Title(), txt)
-	defer readme.Close()
-	_, err = io.Copy(readme, r)
+	_, err = fmt.Fprintf(fReadme, "%s", rreadme.String())
+
 	if err != nil {
 		return fmt.Errorf("failed writing %s: %w", path, err)
 	}

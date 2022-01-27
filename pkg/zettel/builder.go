@@ -2,8 +2,6 @@ package zettel
 
 import (
 	"fmt"
-	"io"
-	"strings"
 	"time"
 )
 
@@ -37,13 +35,11 @@ func newBuilder() *zettelBuilder {
 }
 
 func (zb *zettelBuilder) Title(t string) {
-	zb.inner.title = t
+	zb.inner.readme.Title = t
 }
 
 func (zb *zettelBuilder) Text(t string) {
-	zb.inner.read = func() io.Reader {
-		return strings.NewReader(t)
-	}
+	zb.inner.readme.Text = t
 }
 
 func (zb *zettelBuilder) Metadata() *MetaInfo {
@@ -55,7 +51,7 @@ func (zb *zettelBuilder) Validate() error {
 		return fmt.Errorf("no id")
 	}
 
-	if len(zb.inner.title) == 0 {
+	if len(zb.inner.readme.Title) == 0 {
 		return fmt.Errorf("title empty")
 	}
 	if zb.inner.meta.CreateTime.IsZero() {

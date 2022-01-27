@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -22,27 +21,8 @@ func (c cmdEdit) Help() string {
 	return fmt.Sprintf("Opens a zettel for editing, creating a new git commit")
 }
 
-func pickOne(zets []zettel.Zettel) (zettel.Zettel, error) {
-	switch len(zets) {
-	case 0:
-		return nil, fmt.Errorf("no zettels to pick")
-	case 1:
-		return zets[0], nil
-	}
-	for i, z := range zets {
-		fmt.Printf("[%d]: %s  %s\n", i+1, z.Id(), z.Title())
-	}
-
-	var idx int
-	_, err := fmt.Scanln(&idx)
-	if err != nil {
-		return nil, err
-	}
-
-	if idx--; idx < 0 || idx >= len(zets) {
-		return nil, fmt.Errorf("invalid index")
-	}
-	return zets[idx], nil
+func (c cmdEdit) Synopsis() string {
+	return "edit [knode]"
 }
 
 func (c cmdEdit) Run(args []string) int {
@@ -55,18 +35,11 @@ func (c cmdEdit) Run(args []string) int {
 		log.Fatal(err)
 	}
 
-	txt, err := ioutil.ReadAll(zl.Reader())
+	tmp, err := zl.Readme().NewTemp()
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	tmp, err := os.CreateTemp("", "zledit*.md")
 	defer os.Remove(tmp.Name())
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Fprintf(tmp, "# %s\n\n%s", zl.Title(), txt)
 
 	cmd := exec.Command("vim", tmp.Name())
 	cmd.Stdin = os.Stdin
@@ -87,6 +60,10 @@ func (c cmdEdit) Run(args []string) int {
 		log.Fatal(err)
 	}
 
+	if *readme == zl.Readme() {
+		log.Fatal("Nothing changed")
+	}
+
 	zl2, err := zl.Rebuild(func(b zettel.Builder) error {
 		b.Title(readme.Title)
 		b.Text(readme.Text)
@@ -104,9 +81,6 @@ func (c cmdEdit) Run(args []string) int {
 
 	return 0
 }
-func (c cmdEdit) Synopsis() string {
-	return "edit [knode]"
-}
 
 func (c cmdEdit) AutocompleteArgs() complete.Predictor {
 	iter := c.ctx.Store.Iter()
@@ -114,7 +88,7 @@ func (c cmdEdit) AutocompleteArgs() complete.Predictor {
 	for iter.Next() {
 		z := iter.Zet()
 		set = append(set, z.Id())
-		set = append(set, z.Title())
+		set = append(set, z.Readme().Title)
 	}
 	return complete.PredictSet(set...)
 }

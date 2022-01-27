@@ -1,7 +1,9 @@
 package zettel
 
 import (
+	"fmt"
 	"io"
+	"os"
 	"strings"
 )
 
@@ -23,4 +25,19 @@ func ParseReadme(r io.ReadSeeker) (*Readme, error) {
 	txt := strings.TrimLeft(string(buf), "\n")
 
 	return &Readme{Text: txt, Title: title}, nil
+}
+
+func (rm Readme) String() string {
+	return fmt.Sprintf("# %s\n\n%s", rm.Title, rm.Text)
+}
+
+func (rm Readme) NewTemp() (*os.File, error) {
+	tmp, err := os.CreateTemp("", "zledit*.md")
+	if err != nil {
+		return nil, err
+	}
+
+	tmp.Write([]byte(rm.String()))
+
+	return tmp, nil
 }

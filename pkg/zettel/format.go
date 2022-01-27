@@ -57,7 +57,7 @@ func Fmt(in Zettel, format string) (string, error) {
 func toFormatData(zl Zettel) *formatData {
 	data := &formatData{
 		Id:    string(zl.Id()),
-		Title: zl.Title(),
+		Title: zl.Readme().Title,
 	}
 	meta := zl.Metadata()
 	data.Labels = meta.Labels
