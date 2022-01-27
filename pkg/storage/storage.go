@@ -123,7 +123,7 @@ func (zs *zetStore) Resolve(query string) ([]zettel.Zettel, error) {
 		return []zettel.Zettel{zl}, nil
 	}
 
-	titleMatches := make([]zettel.Zettel, 0, 8)
+	partialMatches := make([]zettel.Zettel, 0, 8)
 	infos, err := zs.dir.ReadDir("")
 	if err != nil {
 		return nil, err
@@ -141,12 +141,12 @@ func (zs *zetStore) Resolve(query string) ([]zettel.Zettel, error) {
 		}
 
 		if strings.Contains(fmt.Sprintf("%s  %s", id, zet.Readme().Title), query) {
-			titleMatches = append(titleMatches, zet)
+			partialMatches = append(partialMatches, zet)
 			continue
 		}
 	}
-	if len(titleMatches) != 0 {
-		return titleMatches, nil
+	if len(partialMatches) != 0 {
+		return partialMatches, nil
 	}
 
 	return nil, fmt.Errorf("couldn't resolve %s", query)
