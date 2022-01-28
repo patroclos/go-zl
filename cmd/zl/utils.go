@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"jensch.works/zl/pkg/zettel"
 )
@@ -27,4 +28,13 @@ func pickOne(zets []zettel.Zettel) (zettel.Zettel, error) {
 		return nil, fmt.Errorf("invalid index")
 	}
 	return zets[idx], nil
+}
+
+func isTerminal(f *os.File) bool {
+	o, err := f.Stat()
+	if err != nil {
+		return false
+	}
+
+	return (o.Mode() & os.ModeCharDevice) == os.ModeCharDevice
 }
