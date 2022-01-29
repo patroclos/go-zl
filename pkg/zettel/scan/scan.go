@@ -3,6 +3,7 @@ package scan
 import (
 	"bufio"
 	"io"
+	"regexp"
 	"strings"
 
 	"jensch.works/zl/pkg/zettel"
@@ -35,10 +36,19 @@ type Zettler interface {
 func scan(c chan<- zettel.Zettel, st Zettler, r io.Reader) {
 	defer close(c)
 	scn := bufio.NewScanner(r)
+	reg := regexp.MustCompile(`\[.+\]\((.+)\)`)
 	for scn.Scan() {
 		line := scn.Text()
 		line = strings.TrimPrefix(line, "* ")
 		line = strings.TrimLeft(line, " \t")
+
+		matches := reg.FindAllStringSubmatch(line, -1)
+		for _, m := range matches {
+			id := strings.Trim(m[1], " /")
+			if zl, err := st.Zettel(id); err == nil {
+				c <- zl
+			}
+		}
 
 		fields := strings.Fields(line)
 		if len(fields) == 0 {
