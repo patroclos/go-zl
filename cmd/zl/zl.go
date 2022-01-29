@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/mitchellh/cli"
-	"jensch.works/zl/cmd/zl/context"
 	"jensch.works/zl/pkg/storage"
 )
 
@@ -30,25 +29,22 @@ func main() {
 	c.Args = os.Args[1:]
 	c.Commands = map[string]cli.CommandFactory{
 		"": func() (cli.Command, error) {
-			return cmdList{
-				ctx: &context.Context{
-					Store: store,
-				},
-			}, nil
+			return cmdList{st: store}, nil
+		},
+		"list": func() (cli.Command, error) {
+			return cmdList{st: store}, nil
 		},
 		"new": func() (cli.Command, error) {
-			return cmdNew{
-				ctx: &context.Context{
-					Store: store,
-				},
-			}, nil
+			return cmdNew{st: store}, nil
 		},
 		"edit": func() (cli.Command, error) {
-			return cmdEdit{
-				ctx: &context.Context{
-					Store: store,
-				},
-			}, nil
+			return cmdEdit{st: store}, nil
+		},
+		"cat": func() (cli.Command, error) {
+			return cmdCat{st: store}, nil
+		},
+		"blinks": func() (cli.Command, error) {
+			return cmdBacklinks{st: store}, nil
 		},
 	}
 

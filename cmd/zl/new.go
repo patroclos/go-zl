@@ -7,20 +7,19 @@ import (
 	"os/exec"
 	"strings"
 
-	"jensch.works/zl/cmd/zl/context"
 	"jensch.works/zl/pkg/zettel"
 )
 
 type cmdNew struct {
-	ctx *context.Context
+	st zettel.Storage
 }
 
 func (c cmdNew) Help() string {
-	return "blub"
+	return "Creates and starts editing a new zettel with the given title"
 }
 
 func (c cmdNew) Synopsis() string {
-	return "new [title]"
+	return "title"
 }
 
 func (c cmdNew) Run(args []string) int {
@@ -65,7 +64,7 @@ func (c cmdNew) Run(args []string) int {
 		return nil
 	})
 
-	err = c.ctx.Store.Put(zl2)
+	err = c.st.Put(zl2)
 	if err != nil {
 		log.Fatal(err)
 	}

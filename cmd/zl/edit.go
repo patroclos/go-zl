@@ -9,12 +9,11 @@ import (
 	"strings"
 
 	"github.com/posener/complete"
-	"jensch.works/zl/cmd/zl/context"
 	"jensch.works/zl/pkg/zettel"
 )
 
 type cmdEdit struct {
-	ctx *context.Context
+	st zettel.Storage
 }
 
 func (c cmdEdit) Help() string {
@@ -22,11 +21,11 @@ func (c cmdEdit) Help() string {
 }
 
 func (c cmdEdit) Synopsis() string {
-	return "edit [knode]"
+	return "zettel"
 }
 
 func (c cmdEdit) Run(args []string) int {
-	zets, err := c.ctx.Store.Resolve(strings.Join(args, " "))
+	zets, err := c.st.Resolve(strings.Join(args, " "))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -39,6 +38,8 @@ func (c cmdEdit) Run(args []string) int {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// keep in mind, the following log.Fatal calls will circumvent this
 	defer os.Remove(tmp.Name())
 
 	cmd := exec.Command("vim", tmp.Name())
@@ -61,7 +62,8 @@ func (c cmdEdit) Run(args []string) int {
 	}
 
 	if *readme == zl.Readme() {
-		log.Fatal("Nothing changed")
+		log.Println("nothing changed")
+		return 0
 	}
 
 	zl2, err := zl.Rebuild(func(b zettel.Builder) error {
@@ -74,7 +76,7 @@ func (c cmdEdit) Run(args []string) int {
 		log.Fatal(err)
 	}
 
-	err = c.ctx.Store.Put(zl2)
+	err = c.st.Put(zl2)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -83,7 +85,7 @@ func (c cmdEdit) Run(args []string) int {
 }
 
 func (c cmdEdit) AutocompleteArgs() complete.Predictor {
-	iter := c.ctx.Store.Iter()
+	iter := c.st.Iter()
 	set := make([]string, 0, 2048)
 	for iter.Next() {
 		z := iter.Zet()

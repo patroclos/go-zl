@@ -6,15 +6,16 @@ import (
 	"log"
 	"os"
 
-	"jensch.works/zl/cmd/zl/context"
+	"jensch.works/zl/pkg/zettel"
 )
 
 type cmdList struct {
-	ctx *context.Context
+	st zettel.Storage
 }
 
 func (c cmdList) Help() string {
-	return ""
+	return `Lists all zettel.
+Using it as a filter makes it resolve every line of input and list every match.`
 }
 
 func (c cmdList) Synopsis() string {
@@ -24,7 +25,7 @@ func (c cmdList) Synopsis() string {
 func (c cmdList) Run(args []string) int {
 	isTerm := isTerminal(os.Stdin)
 	if isTerm {
-		iter := c.ctx.Store.Iter()
+		iter := c.st.Iter()
 		for iter.Next() {
 			zl := iter.Zet()
 			fmt.Printf("%s  %s\n", zl.Id(), zl.Readme().Title)
@@ -34,7 +35,7 @@ func (c cmdList) Run(args []string) int {
 
 	scn := bufio.NewScanner(os.Stdin)
 	for scn.Scan() {
-		zets, err := c.ctx.Store.Resolve(scn.Text())
+		zets, err := c.st.Resolve(scn.Text())
 		if err != nil {
 			log.Println(err)
 			continue
