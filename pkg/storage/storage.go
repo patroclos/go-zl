@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"strings"
 	"sync"
 
 	"github.com/go-git/go-billy/v5"
@@ -13,6 +12,8 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/cache"
 	"github.com/go-git/go-git/v5/storage/filesystem"
 	"gopkg.in/yaml.v2"
+	"jensch.works/zl/pkg/storage/strutil"
+	_ "jensch.works/zl/pkg/storage/strutil"
 	"jensch.works/zl/pkg/zettel"
 )
 
@@ -140,9 +141,9 @@ func (zs *zetStore) Resolve(query string) ([]zettel.Zettel, error) {
 			continue
 		}
 
-		if strings.Contains(fmt.Sprintf("%s  %s", id, zet.Readme().Title), query) {
+		match := strutil.ContainsFold(fmt.Sprintf("%s  %s", id, zet.Readme().Title), query)
+		if match {
 			partialMatches = append(partialMatches, zet)
-			continue
 		}
 	}
 	if len(partialMatches) != 0 {
