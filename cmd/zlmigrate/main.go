@@ -18,8 +18,6 @@ func main() {
 		Use:  "zlmigrate",
 		Args: cli.ArgsExact(2),
 	}
-	// from := root.Flags().StringP("from", "", "", "")
-	// to := root.Flags().StringP("to", "", "", "")
 
 	root.Run = func(cmd *cli.Command, args []string) error {
 		src, err := storage.NewStore(osfs.New(args[0]))
@@ -35,7 +33,6 @@ func main() {
 		olds := make([]string, 0, 1024)
 
 		scn := scan.ListScanner(src)
-		// srcScan.Scan
 
 		for iter := src.Iter(); iter.Next(); {
 			zet := iter.Zet()
@@ -45,7 +42,7 @@ func main() {
 				continue
 			}
 			trimmed, err := zet.Rebuild(func(b zettel.Builder) error {
-				newId := fmt.Sprintf("%s-%s", split[0], split[2][:4])
+				newId := fmt.Sprintf("%s-%s", split[0][2:], split[2][:4])
 				b.Id(newId)
 				return nil
 			})
@@ -60,7 +57,6 @@ func main() {
 			}
 			olds = append(olds, zet.Id())
 
-			// TODO: replace all references in text
 			log.Printf("%s => %s", zet.Id(), trimmed.Id())
 		}
 
