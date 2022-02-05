@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/go-clix/cli"
 	"github.com/go-git/go-billy/v5/osfs"
@@ -41,23 +42,45 @@ func main() {
 				log.Printf("ignoring %s", zet.Id())
 				continue
 			}
-			trimmed, err := zet.Rebuild(func(b zettel.Builder) error {
+			migrated, err := zet.Rebuild(func(b zettel.Builder) error {
 				newId := fmt.Sprintf("%s-%s", split[0][2:], split[2][:4])
 				b.Id(newId)
+
+				meta := b.Metadata()
+				t, err := time.Parse("20060102150405", fmt.Sprintf("%s%s", split[0], split[1]))
+				if err != nil {
+					log.Fatal(fmt.Errorf("failed parsing timestamp %s: %w", zet.Id(), err))
+				}
+				meta.CreateTime = t
+
+				if meta.Link != nil {
+					if a, ok := counterparts[meta.Link.A]; ok {
+						meta.Link.A = a.Id()
+					}
+					if b, ok := counterparts[meta.Link.B]; ok {
+						meta.Link.B = b.Id()
+					}
+					for i := range meta.Link.Ctx {
+						if c, ok := counterparts[meta.Link.Ctx[i]]; ok {
+							meta.Link.Ctx[i] = c.Id()
+						}
+					}
+				}
+
 				return nil
 			})
-			counterparts[trimmed.Id()] = zet
-			counterparts[zet.Id()] = trimmed
+			counterparts[migrated.Id()] = zet
+			counterparts[zet.Id()] = migrated
 			if err != nil {
 				return err
 			}
 
-			if _, err := dst.Zettel(trimmed.Id()); err == nil {
+			if _, err := dst.Zettel(migrated.Id()); err == nil {
 				continue
 			}
 			olds = append(olds, zet.Id())
 
-			log.Printf("%s => %s", zet.Id(), trimmed.Id())
+			log.Printf("%s => %s", zet.Id(), migrated.Id())
 		}
 
 		for _, id := range olds {
@@ -69,13 +92,18 @@ func main() {
 			}
 
 			txt := new.Readme().Text
-			for _, ref := range refs {
+			oldnew := make([]string, len(refs)*2)
+			for i, ref := range refs {
 				newRef := counterparts[ref.Id()]
-				txt = strings.ReplaceAll(txt, ref.Id(), newRef.Id())
+				oldnew[i*2] = ref.Id()
+				oldnew[i*2+1] = newRef.Id()
+				// txt = strings.ReplaceAll(txt, ref.Id(), newRef.Id())
 			}
 
-			if len(refs) > 0 {
-				fmt.Printf("\n--- %s  %s ---\n%s\n", new.Id(), new.Readme().Title, txt)
+			txt = strings.NewReplacer(oldnew...).Replace(txt)
+
+			if l := len(refs); l > 0 {
+				fmt.Printf("rewriting %d references in %s (formerly %s)\n", l, new.Id(), id)
 			}
 			new, err = new.Rebuild(func(b zettel.Builder) error {
 				b.Text(txt)

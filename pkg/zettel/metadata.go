@@ -18,9 +18,9 @@ var (
 )
 
 type MetaInfo struct {
-	Labels     Labels    `yaml:"labels"`
+	Labels     Labels    `yaml:"labels,omitempty"`
 	Link       *LinkInfo `yaml:"link,omitempty"`
-	CreateTime time.Time `yaml:"creationTimestamp"`
+	CreateTime time.Time `yaml:"creationTimestamp,omitempty"`
 }
 
 func (i *MetaInfo) copy(from MetaInfo) {
@@ -67,18 +67,15 @@ func ParseMeta(r io.Reader) (*MetaInfo, error) {
 		CreateTime: dto.CreateTime,
 	}
 
-	lnk := &LinkInfo{}
-
-	if err := _readLink(dto, lnk); err != nil {
+	if err := _readLink(dto, info); err != nil {
 		return nil, err
-	} else {
-		info.Link = lnk
 	}
 
 	return info, nil
 }
 
-func _readLink(dto *metaDto, lnk *LinkInfo) error {
+func _readLink(dto *metaDto, info *MetaInfo) error {
+	lnk := &LinkInfo{}
 	if dto.Link == nil {
 		return nil
 	}
@@ -121,6 +118,8 @@ func _readLink(dto *metaDto, lnk *LinkInfo) error {
 			}
 		}
 	}
+
+	info.Link = lnk
 
 	return nil
 }

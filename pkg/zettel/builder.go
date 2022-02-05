@@ -9,6 +9,7 @@ type Builder interface {
 	Id(string)
 	Title(string)
 	Text(string)
+	Metadata() *MetaInfo
 }
 
 func Build(fn func(b Builder) error) (Zettel, error) {
