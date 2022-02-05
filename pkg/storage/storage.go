@@ -191,7 +191,7 @@ func (zs *zetStore) Put(zl zettel.Zettel) error {
 		return err
 	}
 
-	_, err = tree.Commit(fmt.Sprintf("put %s  %s", id, zl.Readme().Title), &git.CommitOptions{})
+	_, err = tree.Commit(fmt.Sprintf("%s  %s", id, zl.Readme().Title), &git.CommitOptions{})
 	if err != nil {
 		return err
 	}

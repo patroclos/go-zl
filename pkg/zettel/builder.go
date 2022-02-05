@@ -6,6 +6,7 @@ import (
 )
 
 type Builder interface {
+	Id(string)
 	Title(string)
 	Text(string)
 }
@@ -32,6 +33,10 @@ func newBuilder() *zettelBuilder {
 	b.inner.id = plainGenerateId()
 
 	return b
+}
+
+func (zb *zettelBuilder) Id(id string) {
+	zb.inner.id = id
 }
 
 func (zb *zettelBuilder) Title(t string) {
