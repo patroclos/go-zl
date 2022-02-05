@@ -26,6 +26,7 @@ func (c cmdNew) Run(args []string) int {
 	title := strings.Join(args, " ")
 	zl, err := zettel.Build(func(b zettel.Builder) error {
 		b.Title(title)
+		b.Metadata().Labels["zl/inbox"] = "default"
 		return nil
 	})
 	if err != nil {

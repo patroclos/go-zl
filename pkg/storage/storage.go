@@ -1,9 +1,7 @@
 package storage
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"io/fs"
 	"sync"
 
@@ -11,7 +9,6 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/cache"
 	"github.com/go-git/go-git/v5/storage/filesystem"
-	"gopkg.in/yaml.v2"
 	"jensch.works/zl/pkg/storage/strutil"
 	_ "jensch.works/zl/pkg/storage/strutil"
 	"jensch.works/zl/pkg/zettel"
@@ -179,11 +176,8 @@ func (zs *zetStore) Put(zl zettel.Zettel) error {
 		return fmt.Errorf("can't create zettel dir: %w", err)
 	}
 
-	if err := writeReadme(zs, zl); err != nil {
-		return err
-	}
-
-	if err := writeMeta(zs, id, zl.Metadata()); err != nil {
+	chroot, err := zs.dir.Chroot(id)
+	if err := zettel.Write(zl, chroot); err != nil {
 		return err
 	}
 
@@ -200,39 +194,34 @@ func (zs *zetStore) Put(zl zettel.Zettel) error {
 	return nil
 }
 
-func writeReadme(zs *zetStore, zl zettel.Zettel) error {
-	id, rreadme := zl.Id(), zl.Readme()
+func (zs *zetStore) Remove(zet zettel.Zettel) error {
+	id := zet.Id()
+	zs.rw.Lock()
+	defer zs.rw.Unlock()
 
-	path := zs.dir.Join(id, "README.md")
-	fReadme, err := zs.dir.Create(path)
-	defer fReadme.Close()
+	tree, err := zs.git.Worktree()
 	if err != nil {
-		return fmt.Errorf("failed creating %s: %w", path, err)
-	}
-	_, err = fmt.Fprintf(fReadme, "%s", rreadme.String())
-
-	if err != nil {
-		return fmt.Errorf("failed writing %s: %w", path, err)
-	}
-	return nil
-}
-
-func writeMeta(zs *zetStore, id string, mi *zettel.MetaInfo) error {
-	path := zs.dir.Join(id, "meta.yaml")
-	meta, err := zs.dir.Create(path)
-	if err != nil {
-		return fmt.Errorf("failed creating %s: %w", path, err)
-	}
-	defer meta.Close()
-
-	mb, err := yaml.Marshal(mi)
-	if err != nil {
-		return fmt.Errorf("failed marshaling MetaInfo: %w", err)
+		return err
 	}
 
-	_, err = io.Copy(meta, bytes.NewReader(mb))
+	status, err := tree.Status()
 	if err != nil {
-		return fmt.Errorf("failed writing %s: %w", path, err)
+		return err
 	}
+
+	if !status.IsClean() {
+		return fmt.Errorf("git worktree unclean")
+	}
+
+	if _, err := tree.Remove(id); err != nil {
+		return err
+	}
+
+	// create commit
+	_, err = tree.Commit(fmt.Sprintf("REMOVE %s  %s", id, zet.Readme().Title), &git.CommitOptions{})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

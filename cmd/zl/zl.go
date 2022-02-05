@@ -46,6 +46,12 @@ func main() {
 		"blinks": func() (cli.Command, error) {
 			return cmdBacklinks{st: store}, nil
 		},
+		"export": func() (cli.Command, error) {
+			return cmdExport{st: store}, nil
+		},
+		"rm": func() (cli.Command, error) {
+			return cmdRemove{st: store}, nil
+		},
 	}
 
 	exit, err := c.Run()

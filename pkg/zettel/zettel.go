@@ -2,11 +2,13 @@ package zettel
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"strings"
 
 	"github.com/go-git/go-billy/v5"
+	"gopkg.in/yaml.v2"
 )
 
 type Zettel interface {
@@ -44,6 +46,54 @@ func Read(id string, zd billy.Filesystem) (Zettel, error) {
 		meta:   *meta,
 	}
 	return z, nil
+}
+
+func Write(zet Zettel, dir billy.Filesystem) error {
+	if err := writeReadme(zet, dir); err != nil {
+		return err
+	}
+	if err := writeMeta(zet, dir); err != nil {
+		return err
+	}
+	return nil
+}
+
+func writeReadme(zet Zettel, dir billy.Filesystem) error {
+	readme := zet.Readme()
+	fReadme, err := dir.Create("README.md")
+	if err != nil {
+		return err
+	}
+	defer fReadme.Close()
+
+	_, err = fmt.Fprintf(fReadme, "%s", readme.String())
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func writeMeta(zet Zettel, dir billy.Filesystem) error {
+	meta := zet.Metadata()
+	fMeta, err := dir.Create("meta.yaml")
+	if err != nil {
+		return err
+	}
+	defer fMeta.Close()
+
+	mb, err := yaml.Marshal(meta)
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(fMeta, bytes.NewReader(mb))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func scanTitle(r io.ReadSeeker) (string, error) {

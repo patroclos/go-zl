@@ -23,4 +23,5 @@ type Storage interface {
 	Putter
 	Resolver
 	Iter() Iterator
+	Remove(Zettel) error
 }
