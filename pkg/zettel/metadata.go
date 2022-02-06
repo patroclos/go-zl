@@ -32,7 +32,6 @@ func (i *MetaInfo) copy(from MetaInfo) {
 
 	if from.Link != nil {
 		i.Link = new(LinkInfo)
-		i.Link.A = from.Link.A
 		i.Link.A, i.Link.B, i.Link.Ctx = from.Link.A, from.Link.B, from.Link.Ctx
 	}
 }
