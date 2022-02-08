@@ -1,100 +1,77 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"os"
 	"os/exec"
 	"strings"
 
-	"github.com/posener/complete"
+	"github.com/go-clix/cli"
 	"jensch.works/zl/pkg/zettel"
 )
 
-type cmdEdit struct {
-	st zettel.Storage
-}
+func makeCmdEdit(st zettel.Storage) *cli.Command {
+	cmd := &cli.Command{}
+	cmd.Use = "edit zetref"
+	cmd.Run = func(cmd *cli.Command, args []string) error {
+		zets, err := st.Resolve(strings.Join(args, " "))
+		if err != nil {
+			log.Fatal(err)
+		}
+		zl, err := pickOne(zets)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-func (c cmdEdit) Help() string {
-	return fmt.Sprintf("Opens a zettel for editing, creating a new git commit")
-}
+		tmp, err := zl.Readme().NewTemp()
+		if err != nil {
+			log.Fatal(err)
+		}
 
-func (c cmdEdit) Synopsis() string {
-	return "zettel"
-}
+		// keep in mind, the following log.Fatal calls will circumvent this
+		defer os.Remove(tmp.Name())
 
-func (c cmdEdit) Run(args []string) int {
-	zets, err := c.st.Resolve(strings.Join(args, " "))
-	if err != nil {
-		log.Fatal(err)
-	}
-	zl, err := pickOne(zets)
-	if err != nil {
-		log.Fatal(err)
-	}
+		shell := exec.Command("vim", tmp.Name())
+		shell.Stdin = os.Stdin
+		shell.Stdout = os.Stdout
+		shell.Stderr = os.Stderr
+		err = shell.Run()
+		if _, ok := err.(*exec.ExitError); ok {
+			log.Fatalln("aborted")
+		}
 
-	tmp, err := zl.Readme().NewTemp()
-	if err != nil {
-		log.Fatal(err)
-	}
+		if err != nil {
+			return err
+		}
 
-	// keep in mind, the following log.Fatal calls will circumvent this
-	defer os.Remove(tmp.Name())
+		tmp.Seek(0, io.SeekStart)
+		readme, err := zettel.ParseReadme(tmp)
+		if err != nil {
+			return err
+		}
 
-	cmd := exec.Command("vim", tmp.Name())
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err = cmd.Run()
-	if _, ok := err.(*exec.ExitError); ok {
-		log.Fatalln("aborted")
-	}
+		if *readme == zl.Readme() {
+			log.Println("nothing changed")
+			return nil
+		}
 
-	if err != nil {
-		log.Fatal(err)
-	}
+		zl2, err := zl.Rebuild(func(b zettel.Builder) error {
+			b.Title(readme.Title)
+			b.Text(readme.Text)
+			return nil
+		})
 
-	tmp.Seek(0, io.SeekStart)
-	readme, err := zettel.ParseReadme(tmp)
-	if err != nil {
-		log.Fatal(err)
-	}
+		if err != nil {
+			return err
+		}
 
-	if *readme == zl.Readme() {
-		log.Println("nothing changed")
-		return 0
-	}
+		err = st.Put(zl2)
+		if err != nil {
+			return err
+		}
 
-	zl2, err := zl.Rebuild(func(b zettel.Builder) error {
-		b.Title(readme.Title)
-		b.Text(readme.Text)
 		return nil
-	})
-
-	if err != nil {
-		log.Fatal(err)
 	}
-
-	err = c.st.Put(zl2)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return 0
-}
-
-func (c cmdEdit) AutocompleteArgs() complete.Predictor {
-	iter := c.st.Iter()
-	set := make([]string, 0, 2048)
-	for iter.Next() {
-		z := iter.Zet()
-		set = append(set, z.Id())
-		set = append(set, z.Readme().Title)
-	}
-	return complete.PredictSet(set...)
-}
-
-func (c cmdEdit) AutocompleteFlags() complete.Flags {
-	return complete.Flags{}
+	return cmd
 }
