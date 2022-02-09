@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"os"
 	"time"
 
 	"gopkg.in/yaml.v2"
@@ -34,6 +35,59 @@ func (i *MetaInfo) copy(from MetaInfo) {
 		i.Link = new(LinkInfo)
 		i.Link.A, i.Link.B, i.Link.Ctx = from.Link.A, from.Link.B, from.Link.Ctx
 	}
+}
+
+func (i *MetaInfo) Equal(o *MetaInfo) bool {
+	if len(i.Labels) != len(o.Labels) {
+		return false
+	}
+
+	for k, v := range i.Labels {
+		if v2, ok := o.Labels[k]; !ok || v != v2 {
+			return false
+		}
+	}
+
+	if i.Link == nil && o.Link != nil {
+		return false
+	}
+	if i.Link != nil {
+		if o.Link == nil {
+			return false
+		}
+
+		if i.Link.A != o.Link.A {
+			return false
+		}
+		if i.Link.B != o.Link.B {
+			return false
+		}
+		if len(i.Link.Ctx) != len(o.Link.Ctx) {
+			return false
+		}
+		for idx := range i.Link.Ctx {
+			if i.Link.Ctx[idx] != o.Link.Ctx[idx] {
+				return false
+			}
+		}
+	}
+
+	return i.CreateTime == o.CreateTime
+}
+
+func (i *MetaInfo) NewTemp() (*os.File, error) {
+	tmp, err := os.CreateTemp("", "zlmedit*.yaml")
+	if err != nil {
+		return nil, err
+	}
+
+	enc := yaml.NewEncoder(tmp)
+	defer enc.Close()
+	if err := enc.Encode(i); err != nil {
+		os.Remove(tmp.Name())
+		return nil, err
+	}
+	return tmp, nil
 }
 
 type LinkInfo struct {

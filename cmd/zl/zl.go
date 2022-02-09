@@ -33,6 +33,7 @@ func main() {
 	root.AddCommand(makeCmdCat(store))
 	root.AddCommand(makeCmdNew(store))
 	root.AddCommand(makeCmdEdit(store))
+	root.AddCommand(makeCmdMetaEdit(store))
 	root.AddCommand(makeCmdRemove(store))
 	root.AddCommand(makeCmdBacklinks(store))
 	root.AddCommand(makeCmdExport(store))
