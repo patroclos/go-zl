@@ -8,6 +8,7 @@ import (
 
 const (
 	DefaultWideFormat      = `{{.Id}} {{range $k,$v := .Labels}}{{if eq $k "zl/inbox"}}📥 {{end}}{{end}} {{.Title}} {{ .Labels }}`
+	ListingFormat          = `{{.Id}}  {{.Title}}`
 	ListFormat             = `* {{.Id}}  {{.Title}}`
 	ListStatusFormat       = `* {{.Id}}  {{.Status}} {{.Title}}`
 	ListPrettyStatusFormat = `* {{.Id}}  {{.PrettyStatus}} {{.Title}}`

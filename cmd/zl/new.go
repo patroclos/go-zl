@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -61,6 +62,8 @@ func makeCmdNew(st zettel.Storage) *cli.Command {
 		if err != nil {
 			return err
 		}
+
+		fmt.Println(zettel.MustFmt(zl2, zettel.ListingFormat))
 
 		return nil
 	}
