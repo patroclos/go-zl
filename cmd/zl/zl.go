@@ -6,9 +6,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/go-git/go-billy/v5/osfs"
-	// "github.com/mitchellh/cli"
 	"github.com/go-clix/cli"
+	"github.com/go-git/go-billy/v5/osfs"
 	"jensch.works/zl/pkg/storage"
 )
 
@@ -41,41 +40,4 @@ func main() {
 	if err := root.Execute(); err != nil {
 		log.Fatal(err)
 	}
-
-	/*
-		c := cli.NewCLI("zl", "0.1.0")
-		c.Args = os.Args[1:]
-		c.Commands = map[string]cli.CommandFactory{
-			"": func() (cli.Command, error) {
-				return cmdList{st: store}, nil
-			},
-			"list": func() (cli.Command, error) {
-				return cmdList{st: store}, nil
-			},
-			"new": func() (cli.Command, error) {
-				return cmdNew{st: store}, nil
-			},
-			"edit": func() (cli.Command, error) {
-				return cmdEdit{st: store}, nil
-			},
-			"cat": func() (cli.Command, error) {
-				return cmdCat{st: store}, nil
-			},
-			"blinks": func() (cli.Command, error) {
-				return cmdBacklinks{st: store}, nil
-			},
-			"export": func() (cli.Command, error) {
-				return cmdExport{st: store}, nil
-			},
-			"rm": func() (cli.Command, error) {
-				return cmdRemove{st: store}, nil
-			},
-		}
-
-		exit, err := c.Run()
-		if err != nil {
-			log.Println(err)
-		}
-		os.Exit(exit)
-	*/
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/go-clix/cli"
@@ -12,22 +13,19 @@ import (
 func makeCmdExport(st zettel.Storage) *cli.Command {
 	cmd := new(cli.Command)
 	cmd.Use = "export"
+	cmd.Short = "Export Listing to OUT directory"
+	cmd.Long = "`zl <<< modul | zl export out > out/index.md`"
+	cmd.Args = cli.ArgsExact(1)
 	cmd.Run = func(cmd *cli.Command, args []string) error {
-		list := args[0]
-
-		if err := os.MkdirAll(args[1], 0700); err != nil {
+		if err := os.MkdirAll(args[0], 0700); err != nil {
 			return err
 		}
 
-		target := osfs.New(args[1])
+		target := osfs.New(args[0])
 
 		scn := scan.ListScanner(st)
-		f, err := os.Open(list)
-		if err != nil {
-			return err
-		}
 
-		for zet := range scn.Scan(f) {
+		for zet := range scn.Scan(os.Stdin) {
 			if err := target.MkdirAll(zet.Id(), 0700); err != nil {
 				return err
 			}
@@ -36,7 +34,11 @@ func makeCmdExport(st zettel.Storage) *cli.Command {
 				return err
 			}
 
-			zettel.Write(zet, chr)
+			if err := zettel.Write(zet, chr); err != nil {
+				return err
+			}
+
+			fmt.Println(zettel.MustFmt(zet, zettel.ListingFormat))
 		}
 
 		return nil
