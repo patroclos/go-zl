@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/go-clix/cli"
@@ -14,6 +15,7 @@ func makeCmdRemove(st zettel.Storage) *cli.Command {
 	cmd := new(cli.Command)
 	cmd.Use = "remove"
 	cmd.Aliases = []string{"rm"}
+	frce := cmd.Flags().BoolP("force", "f", false, "skip confirmation and integrity cheks")
 	cmd.Run = func(cmd *cli.Command, args []string) error {
 		q := strings.Join(args, " ")
 		matches, err := st.Resolve(q)
@@ -38,24 +40,28 @@ func makeCmdRemove(st zettel.Storage) *cli.Command {
 			}
 		}
 
-		if len(backlinks) > 0 {
-			fmt.Println("Backlinks found:")
-			for i := range backlinks {
-				fmt.Printf("* %s  %s\n", backlinks[i].Id(), backlinks[i].Readme().Title)
-			}
-			fmt.Printf("Proceed anyway? y/N: ")
+		if *frce {
+			return st.Remove(zet)
+		}
 
-			var yn string
-			_, err := fmt.Scanln(&yn)
-			if err != nil || !strings.EqualFold(yn, "y") {
-				return err
+		listing := zettel.MustFmt(zet, zettel.ListingFormat)
+		fmt.Fprintln(os.Stderr, listing)
+		if len(backlinks) > 0 {
+			fmt.Fprintf(os.Stderr, "Backlinks found:")
+			for i := range backlinks {
+				fmt.Fprintf(os.Stderr, "%s\n", zettel.MustFmt(backlinks[i], zettel.ListFormat))
 			}
 		}
 
-		if err := st.Remove(zet); err != nil {
+		fmt.Fprintf(os.Stderr, "Really delete? y/N: ")
+
+		var yn string
+		_, err = fmt.Scanln(&yn)
+		if err != nil || !strings.EqualFold(yn, "y") {
 			return err
 		}
-		return nil
+
+		return st.Remove(zet)
 	}
 	return cmd
 }
