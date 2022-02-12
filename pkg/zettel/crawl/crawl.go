@@ -142,7 +142,7 @@ func (c *crawl) do(cra Node) {
 							pth[i] = cra.Path[i]
 						}
 						c.wg.Add(1)
-						go c.do(Node{Z: ref, Path: pth, Reason: MaskOut})
+						go c.do(Node{Z: iter.Zet(), Path: pth, Reason: MaskOut})
 					}
 				}
 			}
