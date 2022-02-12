@@ -53,56 +53,68 @@ func (m RecurseMask) String() string {
 	return strings.Join(parts, " | ")
 }
 
-type Crawl struct {
+type Node struct {
 	Z      zettel.Zettel
-	Path   []*Crawl
+	Path   []*Node
 	Reason RecurseMask
 }
 
-type CrawlFn func(Crawl) RecurseMask
-
 type Crawler interface {
-	Crawl(zettel.Zettel, CrawlFn)
+	Crawl(Node) RecurseMask
 }
 
-type crawler struct {
+type fnCrawler struct {
+	f func(Node) RecurseMask
+}
+
+func (f fnCrawler) Crawl(n Node) RecurseMask {
+	return f.f(n)
+}
+
+func New(f func(Node) RecurseMask) Crawler {
+	return fnCrawler{f: f}
+}
+
+type Backend struct {
 	st zettel.ZettelerIter
 }
 
-func NewCrawler(st zettel.ZettelerIter) Crawler {
-	return crawler{st: st}
+func NewBackend(st zettel.ZettelerIter) Backend {
+	return Backend{st: st}
 }
 
-func (c crawler) Crawl(z zettel.Zettel, f CrawlFn) {
+func (b Backend) Crawl(c Crawler, zets ...zettel.Zettel) {
 	cr := &crawl{
-		store: c.st,
-		m:     make(map[string]struct{}),
-		rw:    new(sync.RWMutex),
-		wg:    new(sync.WaitGroup),
-		root:  z,
-		fn:    f,
+		store:   b.st,
+		m:       make(map[string]struct{}),
+		rw:      new(sync.RWMutex),
+		wg:      new(sync.WaitGroup),
+		root:    zets,
+		crawler: c,
 	}
 	cr.Run()
 }
 
 type crawl struct {
-	root  zettel.Zettel
-	fn    CrawlFn
-	store zettel.ZettelerIter
-	m     map[string]struct{}
-	rw    *sync.RWMutex
-	wg    *sync.WaitGroup
-	errs  []error
+	root    []zettel.Zettel
+	crawler Crawler
+	store   zettel.ZettelerIter
+	m       map[string]struct{}
+	rw      *sync.RWMutex
+	wg      *sync.WaitGroup
+	errs    []error
 }
 
 func (c *crawl) Run() {
 	c.errs = make([]error, 0, 8)
-	c.wg.Add(1)
-	c.do(Crawl{Z: c.root})
+	c.wg.Add(len(c.root))
+	for i := range c.root {
+		go c.do(Node{Z: c.root[i]})
+	}
 	c.wg.Wait()
 }
 
-func (c *crawl) do(cra Crawl) {
+func (c *crawl) do(cra Node) {
 	defer c.wg.Done()
 	c.rw.Lock()
 	if _, ok := c.m[cra.Z.Id()]; ok {
@@ -112,7 +124,7 @@ func (c *crawl) do(cra Crawl) {
 	c.m[cra.Z.Id()] = struct{}{}
 	c.rw.Unlock()
 
-	mask := c.fn(cra)
+	mask := c.crawler.Crawl(cra)
 
 	if mask.Has(MaskIn) {
 		c.wg.Add(1)
@@ -124,13 +136,13 @@ func (c *crawl) do(cra Crawl) {
 				refs := scn.Scan(strings.NewReader(iter.Zet().Readme().Text))
 				for ref := range refs {
 					if ref.Id() == cra.Z.Id() {
-						pth := make([]*Crawl, len(cra.Path)+1)
+						pth := make([]*Node, len(cra.Path)+1)
 						pth[len(cra.Path)] = &cra
 						for i := range cra.Path {
 							pth[i] = cra.Path[i]
 						}
 						c.wg.Add(1)
-						go c.do(Crawl{Z: ref, Path: pth, Reason: MaskOut})
+						go c.do(Node{Z: ref, Path: pth, Reason: MaskOut})
 					}
 				}
 			}
@@ -143,13 +155,13 @@ func (c *crawl) do(cra Crawl) {
 			defer c.wg.Done()
 			scn := scan.ListScanner(c.store)
 			for ref := range scn.Scan(strings.NewReader(cra.Z.Readme().Text)) {
-				pth := make([]*Crawl, len(cra.Path)+1)
+				pth := make([]*Node, len(cra.Path)+1)
 				pth[len(cra.Path)] = &cra
 				for i := range cra.Path {
 					pth[i] = cra.Path[i]
 				}
 				c.wg.Add(1)
-				go c.do(Crawl{Z: ref, Path: pth, Reason: MaskOut})
+				go c.do(Node{Z: ref, Path: pth, Reason: MaskOut})
 			}
 		}()
 	}
@@ -160,26 +172,26 @@ func (c *crawl) do(cra Crawl) {
 			if err != nil {
 				c.errs = append(c.errs, err)
 			}
-			pth := make([]*Crawl, len(cra.Path)+1)
+			pth := make([]*Node, len(cra.Path)+1)
 			pth[len(cra.Path)] = &cra
 			for i := range cra.Path {
 				pth[i] = cra.Path[i]
 			}
 			c.wg.Add(1)
-			go c.do(Crawl{Z: zet, Path: pth, Reason: MaskLinkA})
+			go c.do(Node{Z: zet, Path: pth, Reason: MaskLinkA})
 		}
 		if mask.Has(MaskLinkB) {
 			zet, err := c.store.Zettel(lnk.B)
 			if err != nil {
 				c.errs = append(c.errs, err)
 			}
-			pth := make([]*Crawl, len(cra.Path)+1)
+			pth := make([]*Node, len(cra.Path)+1)
 			pth[len(cra.Path)] = &cra
 			for i := range cra.Path {
 				pth[i] = cra.Path[i]
 			}
 			c.wg.Add(1)
-			go c.do(Crawl{Z: zet, Path: pth, Reason: MaskLinkB})
+			go c.do(Node{Z: zet, Path: pth, Reason: MaskLinkB})
 		}
 		if mask.Has(MaskLinkCtx) {
 			for i := range lnk.Ctx {
@@ -187,13 +199,13 @@ func (c *crawl) do(cra Crawl) {
 				if err != nil {
 					c.errs = append(c.errs, err)
 				}
-				pth := make([]*Crawl, len(cra.Path)+1)
+				pth := make([]*Node, len(cra.Path)+1)
 				pth[len(cra.Path)] = &cra
 				for i := range cra.Path {
 					pth[i] = cra.Path[i]
 				}
 				c.wg.Add(1)
-				go c.do(Crawl{Z: zet, Path: pth, Reason: MaskLinkCtx})
+				go c.do(Node{Z: zet, Path: pth, Reason: MaskLinkCtx})
 			}
 		}
 	}
