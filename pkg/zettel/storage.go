@@ -25,3 +25,8 @@ type Storage interface {
 	Iter() Iterator
 	Remove(Zettel) error
 }
+
+type ZettelerIter interface {
+	Zetteler
+	Iter() Iterator
+}

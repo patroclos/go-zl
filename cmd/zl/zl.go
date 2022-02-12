@@ -36,6 +36,7 @@ func main() {
 	root.AddCommand(makeCmdRemove(store))
 	root.AddCommand(makeCmdBacklinks(store))
 	root.AddCommand(makeCmdExport(store))
+	root.AddCommand(makeCmdCrawl(store))
 
 	if err := root.Execute(); err != nil {
 		log.Fatal(err)
