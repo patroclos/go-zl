@@ -59,45 +59,32 @@ type Node struct {
 	Reason RecurseMask
 }
 
-type Crawler interface {
-	Crawl(Node) RecurseMask
-}
+type CrawlFn func(Node) RecurseMask
 
-type fnCrawler struct {
-	f func(Node) RecurseMask
-}
-
-func (f fnCrawler) Crawl(n Node) RecurseMask {
-	return f.f(n)
-}
-
-func New(f func(Node) RecurseMask) Crawler {
-	return fnCrawler{f: f}
-}
-
-type Backend struct {
+type Crawl struct {
 	st zettel.ZettelerIter
+	f  CrawlFn
 }
 
-func NewBackend(st zettel.ZettelerIter) Backend {
-	return Backend{st: st}
+func New(st zettel.ZettelerIter, f CrawlFn) Crawl {
+	return Crawl{st: st, f: f}
 }
 
-func (b Backend) Crawl(c Crawler, zets ...zettel.Zettel) {
+func (b Crawl) Crawl(zets ...zettel.Zettel) {
 	cr := &crawl{
 		store:   b.st,
 		m:       make(map[string]struct{}),
 		rw:      new(sync.RWMutex),
 		wg:      new(sync.WaitGroup),
 		root:    zets,
-		crawler: c,
+		crawler: b.f,
 	}
 	cr.Run()
 }
 
 type crawl struct {
 	root    []zettel.Zettel
-	crawler Crawler
+	crawler CrawlFn
 	store   zettel.ZettelerIter
 	m       map[string]struct{}
 	rw      *sync.RWMutex
@@ -124,7 +111,7 @@ func (c *crawl) do(cra Node) {
 	c.m[cra.Z.Id()] = struct{}{}
 	c.rw.Unlock()
 
-	mask := c.crawler.Crawl(cra)
+	mask := c.crawler(cra)
 
 	if mask.Has(MaskIn) {
 		c.wg.Add(1)
@@ -209,10 +196,4 @@ func (c *crawl) do(cra Node) {
 			}
 		}
 	}
-}
-
-func (c crawl) mask(id string) {
-	c.rw.Lock()
-	defer c.rw.Unlock()
-	c.m[id] = struct{}{}
 }

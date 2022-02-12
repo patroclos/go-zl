@@ -29,7 +29,7 @@ func makeCmdCrawl(store zettel.Storage) *cli.Command {
 
 	depth := cmd.Flags().IntP("depth", "d", 0, "max-depth to traverse to")
 	cmd.Run = func(cmd *cli.Command, args []string) error {
-		crawler := crawl.NewBackend(store)
+		crawler := crawl.New(store, depthCrawler{max: *depth}.Crawl)
 		if isTerminal(os.Stdin) {
 			zets, err := store.Resolve(strings.Join(args, " "))
 			if err != nil {
@@ -40,7 +40,7 @@ func makeCmdCrawl(store zettel.Storage) *cli.Command {
 				return err
 			}
 
-			crawler.Crawl(depthCrawler{max: *depth}, zet)
+			crawler.Crawl(zet)
 			return nil
 		}
 
@@ -49,7 +49,7 @@ func makeCmdCrawl(store zettel.Storage) *cli.Command {
 		for zet := range scn.Scan(os.Stdin) {
 			zets = append(zets, zet)
 		}
-		crawler.Crawl(depthCrawler{max: *depth}, zets...)
+		crawler.Crawl(zets...)
 
 		return nil
 	}
