@@ -11,16 +11,16 @@ import (
 type RecurseMask int
 
 const (
-	MaskNone RecurseMask = 0
-	MaskLink             = MaskLinkA | MaskLinkB | MaskLinkCtx
-	MaskAll              = MaskIn | MaskOut | MaskLink
+	None RecurseMask = 0
+	Link             = LinkA | LinkB | LinkContext
+	All              = Inbound | Outbound | Link
 )
 const (
-	MaskIn RecurseMask = 1 << iota
-	MaskOut
-	MaskLinkA
-	MaskLinkB
-	MaskLinkCtx
+	Inbound RecurseMask = 1 << iota
+	Outbound
+	LinkA
+	LinkB
+	LinkContext
 )
 
 func (m RecurseMask) Has(mask RecurseMask) bool {
@@ -29,22 +29,22 @@ func (m RecurseMask) Has(mask RecurseMask) bool {
 
 func (m RecurseMask) String() string {
 	switch m {
-	case MaskNone:
+	case None:
 		return "None"
-	case MaskIn:
+	case Inbound:
 		return "In"
-	case MaskOut:
+	case Outbound:
 		return "Out"
-	case MaskLinkA:
+	case LinkA:
 		return "Link.A"
-	case MaskLinkB:
+	case LinkB:
 		return "Link.B"
-	case MaskLinkCtx:
+	case LinkContext:
 		return "Link.Ctx"
 	}
 
 	var parts []string
-	for k := MaskIn; k < MaskLinkCtx; k <<= 1 {
+	for k := Inbound; k < LinkContext; k <<= 1 {
 		if m&k != 0 {
 			parts = append(parts, k.String())
 		}
@@ -61,16 +61,20 @@ type Node struct {
 
 type CrawlFn func(Node) RecurseMask
 
-type Crawl struct {
+type Crawler interface {
+	Crawl(...zettel.Zettel)
+}
+
+type crawlData struct {
 	st zettel.ZettelerIter
 	f  CrawlFn
 }
 
-func New(st zettel.ZettelerIter, f CrawlFn) Crawl {
-	return Crawl{st: st, f: f}
+func New(st zettel.ZettelerIter, f CrawlFn) Crawler {
+	return crawlData{st: st, f: f}
 }
 
-func (b Crawl) Crawl(zets ...zettel.Zettel) {
+func (b crawlData) Crawl(zets ...zettel.Zettel) {
 	cr := &crawl{
 		store:   b.st,
 		m:       make(map[string]struct{}),
@@ -104,6 +108,7 @@ func (c *crawl) Run() {
 func (c *crawl) do(cra Node) {
 	defer c.wg.Done()
 	c.rw.Lock()
+	// TODO: masking needs to take the path into account
 	if _, ok := c.m[cra.Z.Id()]; ok {
 		c.rw.Unlock()
 		return
@@ -113,7 +118,7 @@ func (c *crawl) do(cra Node) {
 
 	mask := c.crawler(cra)
 
-	if mask.Has(MaskIn) {
+	if mask.Has(Inbound) {
 		c.wg.Add(1)
 		go func() {
 			defer c.wg.Done()
@@ -129,14 +134,14 @@ func (c *crawl) do(cra Node) {
 							pth[i] = cra.Path[i]
 						}
 						c.wg.Add(1)
-						go c.do(Node{Z: iter.Zet(), Path: pth, Reason: MaskOut})
+						go c.do(Node{Z: iter.Zet(), Path: pth, Reason: Outbound})
 					}
 				}
 			}
 		}()
 	}
 
-	if mask.Has(MaskOut) {
+	if mask.Has(Outbound) {
 		c.wg.Add(1)
 		go func() {
 			defer c.wg.Done()
@@ -148,13 +153,13 @@ func (c *crawl) do(cra Node) {
 					pth[i] = cra.Path[i]
 				}
 				c.wg.Add(1)
-				go c.do(Node{Z: ref, Path: pth, Reason: MaskOut})
+				go c.do(Node{Z: ref, Path: pth, Reason: Outbound})
 			}
 		}()
 	}
 
-	if lnk := cra.Z.Metadata().Link; mask&MaskLink != MaskNone && lnk != nil {
-		if mask.Has(MaskLinkA) {
+	if lnk := cra.Z.Metadata().Link; mask&Link != None && lnk != nil {
+		if mask.Has(LinkA) {
 			zet, err := c.store.Zettel(lnk.A)
 			if err != nil {
 				c.errs = append(c.errs, err)
@@ -165,9 +170,9 @@ func (c *crawl) do(cra Node) {
 				pth[i] = cra.Path[i]
 			}
 			c.wg.Add(1)
-			go c.do(Node{Z: zet, Path: pth, Reason: MaskLinkA})
+			go c.do(Node{Z: zet, Path: pth, Reason: LinkA})
 		}
-		if mask.Has(MaskLinkB) {
+		if mask.Has(LinkB) {
 			zet, err := c.store.Zettel(lnk.B)
 			if err != nil {
 				c.errs = append(c.errs, err)
@@ -178,9 +183,9 @@ func (c *crawl) do(cra Node) {
 				pth[i] = cra.Path[i]
 			}
 			c.wg.Add(1)
-			go c.do(Node{Z: zet, Path: pth, Reason: MaskLinkB})
+			go c.do(Node{Z: zet, Path: pth, Reason: LinkB})
 		}
-		if mask.Has(MaskLinkCtx) {
+		if mask.Has(LinkContext) {
 			for i := range lnk.Ctx {
 				zet, err := c.store.Zettel(lnk.Ctx[i])
 				if err != nil {
@@ -192,7 +197,7 @@ func (c *crawl) do(cra Node) {
 					pth[i] = cra.Path[i]
 				}
 				c.wg.Add(1)
-				go c.do(Node{Z: zet, Path: pth, Reason: MaskLinkCtx})
+				go c.do(Node{Z: zet, Path: pth, Reason: LinkContext})
 			}
 		}
 	}

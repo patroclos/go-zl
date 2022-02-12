@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-clix/cli"
 	"jensch.works/zl/pkg/zettel"
-	"jensch.works/zl/pkg/zettel/scan"
+	"jensch.works/zl/pkg/zettel/crawl"
 )
 
 func makeCmdBacklinks(st zettel.Storage) *cli.Command {
@@ -23,15 +23,13 @@ func makeCmdBacklinks(st zettel.Storage) *cli.Command {
 			return err
 		}
 
-		scn := scan.ListScanner(st)
-		for iter := st.Iter(); iter.Next(); {
-			zl2 := iter.Zet()
-			for ref := range scn.Scan(strings.NewReader(zl2.Readme().Text)) {
-				if ref.Id() == zl.Id() {
-					fmt.Printf("%s  %s\n", zl2.Id(), zl2.Readme().Title)
-				}
+		crawl.New(st, func(n crawl.Node) crawl.RecurseMask {
+			if len(n.Path) == 0 {
+				return crawl.Inbound
 			}
-		}
+			fmt.Println(zettel.MustFmt(n.Z, zettel.ListingFormat))
+			return crawl.None
+		}).Crawl(zl)
 
 		return nil
 	}
