@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-clix/cli"
 	"jensch.works/zl/pkg/zettel"
-	"jensch.works/zl/pkg/zettel/scan"
+	"jensch.works/zl/pkg/zettel/crawl"
 )
 
 func makeCmdRemove(st zettel.Storage) *cli.Command {
@@ -28,17 +28,13 @@ func makeCmdRemove(st zettel.Storage) *cli.Command {
 		}
 
 		backlinks := make([]zettel.Zettel, 0, 8)
-		scn := scan.ListScanner(st)
-		for iter := st.Iter(); iter.Next(); {
-			other := iter.Zet()
-
-			for ref := range scn.Scan(strings.NewReader(other.Readme().Text)) {
-				if ref.Id() == zet.Id() {
-					backlinks = append(backlinks, other)
-					break
-				}
+		crawl.New(st, func(n crawl.Node) crawl.RecurseMask {
+			if len(n.Path) == 0 {
+				return crawl.Inbound
 			}
-		}
+			backlinks = append(backlinks, n.Z)
+			return crawl.None
+		}).Crawl(zet)
 
 		if *frce {
 			return st.Remove(zet)
