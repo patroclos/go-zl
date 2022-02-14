@@ -1,6 +1,7 @@
 package crawl
 
 import (
+	"log"
 	"strings"
 	"sync"
 
@@ -105,6 +106,29 @@ func (c *crawl) Run() {
 	c.wg.Wait()
 }
 
+func (c *crawl) doId(id string, from Node, reason RecurseMask) {
+	c.rw.Lock()
+	if _, ok := c.m[id]; ok {
+		c.rw.Unlock()
+		return
+	}
+	c.rw.Unlock()
+	zet, err := c.store.Zettel(id)
+	if err != nil {
+		c.errs = append(c.errs, err)
+		log.Println(err)
+		return
+	}
+
+	pth := make([]*Node, len(from.Path)+1)
+	pth[len(from.Path)] = &from
+	for i := range from.Path {
+		pth[i] = from.Path[i]
+	}
+	c.wg.Add(1)
+	go c.do(Node{Z: zet, Path: pth, Reason: reason})
+}
+
 func (c *crawl) do(cra Node) {
 	defer c.wg.Done()
 	c.rw.Lock()
@@ -134,7 +158,7 @@ func (c *crawl) do(cra Node) {
 							pth[i] = cra.Path[i]
 						}
 						c.wg.Add(1)
-						go c.do(Node{Z: iter.Zet(), Path: pth, Reason: Outbound})
+						go c.do(Node{Z: iter.Zet(), Path: pth, Reason: Inbound})
 					}
 				}
 			}
@@ -160,44 +184,14 @@ func (c *crawl) do(cra Node) {
 
 	if lnk := cra.Z.Metadata().Link; mask&Link != None && lnk != nil {
 		if mask.Has(LinkA) {
-			zet, err := c.store.Zettel(lnk.A)
-			if err != nil {
-				c.errs = append(c.errs, err)
-			}
-			pth := make([]*Node, len(cra.Path)+1)
-			pth[len(cra.Path)] = &cra
-			for i := range cra.Path {
-				pth[i] = cra.Path[i]
-			}
-			c.wg.Add(1)
-			go c.do(Node{Z: zet, Path: pth, Reason: LinkA})
+			c.doId(lnk.A, cra, LinkA)
 		}
 		if mask.Has(LinkB) {
-			zet, err := c.store.Zettel(lnk.B)
-			if err != nil {
-				c.errs = append(c.errs, err)
-			}
-			pth := make([]*Node, len(cra.Path)+1)
-			pth[len(cra.Path)] = &cra
-			for i := range cra.Path {
-				pth[i] = cra.Path[i]
-			}
-			c.wg.Add(1)
-			go c.do(Node{Z: zet, Path: pth, Reason: LinkB})
+			c.doId(lnk.B, cra, LinkB)
 		}
 		if mask.Has(LinkContext) {
 			for i := range lnk.Ctx {
-				zet, err := c.store.Zettel(lnk.Ctx[i])
-				if err != nil {
-					c.errs = append(c.errs, err)
-				}
-				pth := make([]*Node, len(cra.Path)+1)
-				pth[len(cra.Path)] = &cra
-				for i := range cra.Path {
-					pth[i] = cra.Path[i]
-				}
-				c.wg.Add(1)
-				go c.do(Node{Z: zet, Path: pth, Reason: LinkContext})
+				c.doId(lnk.Ctx[i], cra, LinkContext)
 			}
 		}
 	}
