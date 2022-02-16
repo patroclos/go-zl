@@ -139,3 +139,7 @@ func (z *zet) toBuilder() *zettelBuilder {
 
 	return b
 }
+
+func (z *zet) String() string {
+	return MustFmt(z, ListingFormat)
+}
