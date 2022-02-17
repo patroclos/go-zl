@@ -13,7 +13,7 @@ const (
 
 var rng *rand.Rand
 
-func generateId(rng *rand.Rand, t time.Time) string {
+func newId(rng *rand.Rand, t time.Time) string {
 	ts := t.Format("060102")
 	buf := [idLen]byte{}
 	for i := 0; i < idLen; i++ {
@@ -22,9 +22,9 @@ func generateId(rng *rand.Rand, t time.Time) string {
 	return fmt.Sprintf("%s-%s", ts, buf[:])
 }
 
-func plainGenerateId() string {
+func newIdToday() string {
 	if rng == nil {
 		rng = rand.New(rand.NewSource(time.Now().UnixNano()))
 	}
-	return generateId(rng, time.Now())
+	return newId(rng, time.Now())
 }

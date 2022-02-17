@@ -32,7 +32,7 @@ func newBuilder() *zettelBuilder {
 	b := &zettelBuilder{}
 	b.inner.meta.CreateTime = time.Now()
 	b.inner.meta.Labels = make(map[string]string)
-	b.inner.id = plainGenerateId()
+	b.inner.id = newIdToday()
 
 	return b
 }
