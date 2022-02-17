@@ -27,9 +27,9 @@ type ItemType int
 
 const (
 	itemErr ItemType = iota
-	itemTxt
+	ItemTxt
 	itemEof
-	itemRefbox
+	ItemRefbox
 )
 
 func Elements(st zettel.Zetteler, txt string) ([]*Item, error) {
@@ -87,7 +87,7 @@ func lexText(l *lexer) stateFn {
 		line := l.scn.Text()
 		if strings.HasSuffix(line, ":") {
 			if !l.scn.Scan() {
-				l.emit(itemTxt)
+				l.emit(ItemTxt)
 				l.start = l.pos
 				l.emit(itemEof)
 				return nil
@@ -99,14 +99,14 @@ func lexText(l *lexer) stateFn {
 				l.pos += 2
 				return lexText
 			}
-			l.emit(itemTxt)
+			l.emit(ItemTxt)
 			l.start, l.pos = l.pos, l.pos+2
 			return lexRefBlock
 		}
 		l.pos += 1
 	}
 	if l.pos > l.start {
-		l.emit(itemTxt)
+		l.emit(ItemTxt)
 		l.start = l.pos
 	}
 	l.emit(itemEof)
@@ -117,7 +117,7 @@ func lexRefBlock(l *lexer) stateFn {
 	for l.scn.Scan() {
 		line := l.scn.Text()
 		if len(line) == 0 {
-			l.emit(itemRefbox)
+			l.emit(ItemRefbox)
 			l.start = l.pos
 			return lexText
 		}
@@ -129,12 +129,12 @@ func lexRefBlock(l *lexer) stateFn {
 					l.pos += 1
 					continue
 				}
-				l.emit(itemRefbox)
+				l.emit(ItemRefbox)
 				l.pos += 1
 				return lexText
 			}
 			if l.pos > l.start {
-				l.emit(itemRefbox)
+				l.emit(ItemRefbox)
 				l.start = l.pos
 				l.emit(itemEof)
 			}
@@ -147,7 +147,7 @@ func lexRefBlock(l *lexer) stateFn {
 		}
 	}
 	if l.start < l.pos {
-		l.emit(itemRefbox)
+		l.emit(ItemRefbox)
 		l.start = l.pos
 	}
 	return lexText
