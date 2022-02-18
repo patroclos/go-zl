@@ -26,7 +26,7 @@ func makeCmdList(st zettel.Storage) *cli.Command {
 				fmt.Println(n.Z)
 				return crawl.None
 			}
-			view := visibility.TaintView(printZ, strings.Split(os.ExpandEnv(`$ZL_TOLERATE`), ","))
+			view := visibility.TaintView(printZ, strings.Split(os.Getenv(`ZL_TOLERATE`), ","))
 
 			var c crawl.Crawler
 			if *all {
@@ -50,7 +50,10 @@ func makeCmdList(st zettel.Storage) *cli.Command {
 			}
 
 			for _, zl := range zets {
-				fmt.Printf("%s  %s\n", zl.Id(), zl.Readme().Title)
+				if !visibility.Visible(zl, strings.Split(os.Getenv("ZL_TOLERATE"), ",")) {
+					continue
+				}
+				fmt.Println(zl)
 			}
 		}
 		if err := scn.Err(); err != nil {

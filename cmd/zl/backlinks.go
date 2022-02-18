@@ -27,7 +27,7 @@ func makeCmdBacklinks(st zettel.Storage) *cli.Command {
 			if len(n.Path) == 0 {
 				return crawl.Inbound
 			}
-			fmt.Println(zettel.MustFmt(n.Z, zettel.ListingFormat))
+			fmt.Println(n.Z)
 			return crawl.None
 		}).Crawl(zl)
 

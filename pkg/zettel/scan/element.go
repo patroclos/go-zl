@@ -2,6 +2,7 @@ package scan
 
 import (
 	"bufio"
+	"fmt"
 	"strings"
 
 	"jensch.works/zl/pkg/zettel"
@@ -26,16 +27,19 @@ type Item struct {
 type ItemType int
 
 const (
-	itemErr ItemType = iota
+	ItemErr ItemType = iota
 	ItemTxt
 	itemEof
 	ItemRefbox
 )
 
-func Elements(st zettel.Zetteler, txt string) ([]*Item, error) {
+func Elements(st zettel.Resolver, txt string) ([]*Item, error) {
 	_, ch := lex(st, txt)
 	items := make([]*Item, 0)
 	for x := range ch {
+		if x.Type == ItemErr {
+			return nil, fmt.Errorf("%sl", x.Span.Input)
+		}
 		items = append(items, x)
 	}
 	return items, nil
@@ -46,13 +50,13 @@ type stateFn func(*lexer) stateFn
 type lexer struct {
 	input string
 	scn   *bufio.Scanner
-	st    zettel.Zetteler
+	st    zettel.Resolver
 	start int
 	pos   int
 	items chan *Item
 }
 
-func lex(st zettel.Zetteler, input string) (*lexer, chan *Item) {
+func lex(st zettel.Resolver, input string) (*lexer, chan *Item) {
 	l := &lexer{
 		st:    st,
 		items: make(chan *Item),
@@ -65,8 +69,8 @@ func lex(st zettel.Zetteler, input string) (*lexer, chan *Item) {
 
 func (l *lexer) errorf(format string, args ...interface{}) stateFn {
 	l.items <- &Item{
-		BlkSpan{l.input, l.start, l.pos},
-		itemErr,
+		BlkSpan{fmt.Sprintf(format, args...), -1, -1},
+		ItemErr,
 	}
 	return nil
 }
@@ -93,8 +97,7 @@ func lexText(l *lexer) stateFn {
 				return nil
 			}
 			potential := l.scn.Text()
-			potential = strings.TrimLeft(potential, "* ")
-			_, err := l.st.Zettel(strings.Fields(potential)[0])
+			_, err := l.st.Resolve(potential)
 			if err != nil {
 				l.pos += 2
 				return lexText
@@ -140,7 +143,7 @@ func lexRefBlock(l *lexer) stateFn {
 			}
 			return nil
 		}
-		_, err := l.st.Zettel(l.scn.Text())
+		_, err := l.st.Resolve(l.scn.Text())
 		if err != nil {
 			l.errorf("%v", err)
 			return nil

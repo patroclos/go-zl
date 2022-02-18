@@ -3,6 +3,8 @@ package storage
 import (
 	"fmt"
 	"io/fs"
+	"log"
+	"strings"
 	"sync"
 
 	"github.com/go-git/go-billy/v5"
@@ -117,6 +119,8 @@ func (zs *zetStore) Iter() zettel.Iterator {
 }
 
 func (zs *zetStore) Resolve(query string) ([]zettel.Zettel, error) {
+	query = strings.TrimPrefix(query, "* ")
+	log.Println(query)
 	if zl, err := zs.Zettel(query); err == nil {
 		return []zettel.Zettel{zl}, nil
 	}
@@ -138,7 +142,7 @@ func (zs *zetStore) Resolve(query string) ([]zettel.Zettel, error) {
 			continue
 		}
 
-		match := strutil.ContainsFold(fmt.Sprintf("%s  %s", id, zet.Readme().Title), query)
+		match := strutil.ContainsFold(fmt.Sprint(zet), query)
 		if match {
 			partialMatches = append(partialMatches, zet)
 		}

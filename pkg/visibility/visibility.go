@@ -18,6 +18,9 @@ func TaintView(inner crawl.CrawlFn, tolerate []string) crawl.CrawlFn {
 }
 
 func Visible(z zettel.Zettel, tolerate []string) bool {
+	if len(tolerate) == 1 && tolerate[0] == "*" {
+		return true
+	}
 	taint, ok := z.Metadata().Labels["zl/taint"]
 	if !ok {
 		return true
