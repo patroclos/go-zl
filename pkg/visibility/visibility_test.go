@@ -42,6 +42,10 @@ func TestTaintView(t *testing.T) {
 	}
 
 	visited = make([]zettel.Zettel, 0)
+	inner = func(n crawl.Node) crawl.RecurseMask {
+		visited = append(visited, n.Z)
+		return crawl.All
+	}
 	taintView = TaintView(inner, nil)
 
 	crawl.New(st, taintView).Crawl(zl)

@@ -34,6 +34,7 @@ func (v MaskView) Mask(z zettel.Zettel) (zettel.Zettel, error) {
 			scn := bufio.NewScanner(strings.NewReader(txt))
 			scn.Scan()
 			str.WriteString(fmt.Sprintln(scn.Text()))
+			br := false
 			for scn.Scan() {
 				line := scn.Text()
 				zets, err := v.Store.Resolve(line)
@@ -50,7 +51,11 @@ func (v MaskView) Mask(z zettel.Zettel) (zettel.Zettel, error) {
 					log.Printf("masking %s", z)
 					z = Masked(z)
 				}
-				str.WriteString(zettel.MustFmt(z, "* {{.Id}}  {{.Title}}\n"))
+				if br {
+					str.WriteString("\n")
+				}
+				str.WriteString(zettel.MustFmt(z, "* {{.Id}}  {{.Title}}"))
+				br = true
 			}
 		}
 		b.Text(str.String())

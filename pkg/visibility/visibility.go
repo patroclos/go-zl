@@ -1,16 +1,13 @@
 package visibility
 
 import (
-	"os"
-	"strings"
-
 	"jensch.works/zl/pkg/zettel"
 	"jensch.works/zl/pkg/zettel/crawl"
 )
 
 func TaintView(inner crawl.CrawlFn, tolerate []string) crawl.CrawlFn {
 	return func(n crawl.Node) crawl.RecurseMask {
-		if !Visible(n.Z, strings.Split(os.ExpandEnv("$ZL_TOLERATE"), ",")) {
+		if !Visible(n.Z, tolerate) {
 			return crawl.None
 		}
 		return inner(n)
