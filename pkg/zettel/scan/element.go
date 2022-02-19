@@ -19,6 +19,15 @@ type BlkSpan struct {
 	Start, Pos int
 }
 
+func (s BlkSpan) String() string {
+	scn := bufio.NewScanner(strings.NewReader(s.Input))
+	lines := make([]string, 0)
+	for scn.Scan() {
+		lines = append(lines, scn.Text())
+	}
+	return strings.Join(lines[s.Start:s.Pos], "\n")
+}
+
 type Item struct {
 	Span BlkSpan
 	Type ItemType

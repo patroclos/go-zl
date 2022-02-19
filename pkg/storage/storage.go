@@ -120,9 +120,14 @@ func (zs *zetStore) Iter() zettel.Iterator {
 
 func (zs *zetStore) Resolve(query string) ([]zettel.Zettel, error) {
 	query = strings.TrimPrefix(query, "* ")
-	log.Println(query)
 	if zl, err := zs.Zettel(query); err == nil {
 		return []zettel.Zettel{zl}, nil
+	}
+
+	if split := strings.Split(query, "  "); len(split) > 1 {
+		if zl, err := zs.Zettel(split[0]); err == nil {
+			return []zettel.Zettel{zl}, nil
+		}
 	}
 
 	partialMatches := make([]zettel.Zettel, 0, 8)
@@ -132,17 +137,18 @@ func (zs *zetStore) Resolve(query string) ([]zettel.Zettel, error) {
 	}
 
 	for _, x := range infos {
-		if !x.IsDir() {
+		if !x.IsDir() || x.Name() == ".git" {
 			continue
 		}
 		id := x.Name()
 		ch, _ := zs.dir.Chroot(id)
 		zet, err := zettel.Read(id, ch)
 		if err != nil {
+			log.Println(err)
 			continue
 		}
 
-		match := strutil.ContainsFold(fmt.Sprint(zet), query)
+		match := strutil.ContainsFold(zettel.MustFmt(zet, zettel.ListingFormat), query)
 		if match {
 			partialMatches = append(partialMatches, zet)
 		}
