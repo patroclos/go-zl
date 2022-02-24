@@ -37,6 +37,8 @@ func main() {
 	root.AddCommand(makeCmdBacklinks(store))
 	root.AddCommand(makeCmdExport(store))
 	root.AddCommand(makeCmdCrawl(store))
+	root.AddCommand(makeCmdSearch(store))
+	root.AddCommand(makeCmdLabel(store))
 
 	if err := root.Execute(); err != nil {
 		log.Fatal(err)

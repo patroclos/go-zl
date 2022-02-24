@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
-	"strings"
 
 	"github.com/go-clix/cli"
 	"github.com/go-git/go-billy/v5/osfs"
@@ -18,6 +18,7 @@ func makeCmdExport(st zettel.Storage) *cli.Command {
 	cmd.Short = "Export Listing to OUT directory"
 	cmd.Long = "`zl <<< modul | zl export out > out/index.md`"
 	cmd.Args = cli.ArgsExact(1)
+	tol := cmd.Flags().StringSliceP("tolerate", "t", nil, "comma separated list of tolerated taints")
 	cmd.Run = func(cmd *cli.Command, args []string) error {
 		if err := os.MkdirAll(args[0], 0700); err != nil {
 			return err
@@ -36,9 +37,14 @@ func makeCmdExport(st zettel.Storage) *cli.Command {
 				return err
 			}
 
+			if !visibility.Visible(zet, *tol) {
+				log.Printf("omitting %s", zet)
+				continue
+			}
+
 			masked, err := visibility.MaskView{
 				Store:    st,
-				Tolerate: strings.Split(os.Getenv("ZL_TOLERATE"), ","),
+				Tolerate: *tol,
 			}.Mask(zet)
 
 			if err != nil {

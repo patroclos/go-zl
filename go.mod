@@ -6,6 +6,7 @@ require (
 	github.com/go-clix/cli v0.2.0
 	github.com/go-git/go-billy/v5 v5.3.1
 	github.com/go-git/go-git/v5 v5.4.2
+	github.com/kirsle/configdir v0.0.0-20170128060238-e45d2f54772f
 	gopkg.in/yaml.v2 v2.4.0
 )
 

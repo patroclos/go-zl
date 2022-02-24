@@ -22,16 +22,21 @@ type Labelspec struct {
 	Negated    bool
 }
 
-func RunSpecs(specs []LabelsMatcher, labels Labels) bool {
-	for _, spec := range specs {
-		if !spec.Match(labels) {
-			return false
-		}
+func (ls *Labelspec) UnmarshalYAML(u func(interface{}) error) error {
+	var str string
+	if err := u(&str); err != nil {
+		return err
 	}
-	return true
+
+	newSpec, err := ParseLabelspec(str)
+	if err != nil {
+		return err
+	}
+	*ls = newSpec
+	return nil
 }
 
-func (ls Labelspec) Match(labels Labels) bool {
+func (ls *Labelspec) Match(labels Labels) bool {
 	ignoreVal := ls.MatchValue == ""
 	var val *string = nil
 	for k, v := range labels {
@@ -41,20 +46,37 @@ func (ls Labelspec) Match(labels Labels) bool {
 		}
 	}
 
-	if ignoreVal && val != nil {
-		return !ls.Negated
+	if ls.Negated {
+		if val != nil {
+			if ignoreVal {
+				return false
+			}
+			return *val != ls.MatchValue
+		}
+		return true
 	}
 
-	if !ignoreVal && val != nil && *val != ls.MatchValue {
-		return ls.Negated
+	if val != nil {
+		if ignoreVal {
+			return true
+		}
+		return *val == ls.MatchValue
 	}
-
-	return val != nil
+	return false
 }
 
-func ParseLabelspec(txt string) (*Labelspec, error) {
+func RunSpecs(specs []LabelsMatcher, labels Labels) bool {
+	for _, spec := range specs {
+		if !spec.Match(labels) {
+			return false
+		}
+	}
+	return true
+}
+
+func ParseLabelspec(txt string) (ls Labelspec, err error) {
 	if len(txt) == 0 {
-		return nil, fmt.Errorf("spec is empty: %w", ErrInvalidSpecFormat)
+		return ls, fmt.Errorf("spec is empty: %w", ErrInvalidSpecFormat)
 	}
 
 	negated := txt[0] == '-'
@@ -63,7 +85,7 @@ func ParseLabelspec(txt string) (*Labelspec, error) {
 	}
 
 	if len(txt) == 0 {
-		return &Labelspec{
+		return Labelspec{
 			MatchLabel: "",
 			MatchValue: "",
 			Negated:    true,
@@ -72,10 +94,10 @@ func ParseLabelspec(txt string) (*Labelspec, error) {
 
 	isep := strings.Index(txt, "=")
 	if isep == -1 {
-		if err := validateLabelName(txt); err != nil {
-			return nil, err
+		if err = validateLabelName(txt); err != nil {
+			return
 		}
-		return &Labelspec{
+		return Labelspec{
 			MatchLabel: txt,
 			MatchValue: "",
 			Negated:    negated,
@@ -84,20 +106,21 @@ func ParseLabelspec(txt string) (*Labelspec, error) {
 
 	comps := strings.SplitN(txt, "=", 2)
 	if len(comps) != 2 {
-		return nil, fmt.Errorf("len(comps) != 2: %w", ErrInvalidSpecFormat)
+		err = fmt.Errorf("len(comps) != 2: %w", ErrInvalidSpecFormat)
+		return
 	}
 
 	name, value := comps[0], comps[1]
 
-	if err := validateLabelName(name); err != nil {
-		return nil, err
+	if err = validateLabelName(name); err != nil {
+		return
 	}
 
-	if err := validateLabelValue(name, value); err != nil {
-		return nil, err
+	if err = validateLabelValue(name, value); err != nil {
+		return
 	}
 
-	return &Labelspec{
+	return Labelspec{
 		MatchLabel: name,
 		MatchValue: value,
 		Negated:    negated,

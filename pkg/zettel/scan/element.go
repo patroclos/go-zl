@@ -3,6 +3,7 @@ package scan
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"strings"
 
 	"jensch.works/zl/pkg/zettel"
@@ -141,21 +142,19 @@ func lexRefBlock(l *lexer) stateFn {
 					l.pos += 1
 					continue
 				}
-				l.emit(ItemRefbox)
-				l.pos += 1
-				return lexText
+				break
 			}
-			if l.pos > l.start {
-				l.emit(ItemRefbox)
-				l.start = l.pos
-				l.emit(itemEof)
-			}
-			return nil
+			l.emit(ItemRefbox)
+			l.start = l.pos
+			return lexText
 		}
 		_, err := l.st.Resolve(l.scn.Text())
 		if err != nil {
-			l.errorf("%v", err)
-			return nil
+			log.Println(err)
+			l.pos -= 1
+			l.emit(ItemRefbox)
+			l.start = l.pos
+			return lexText
 		}
 	}
 	if l.start < l.pos {

@@ -39,10 +39,21 @@ func (v MaskView) Mask(z zettel.Zettel) (zettel.Zettel, error) {
 				line := scn.Text()
 				zets, err := v.Store.Resolve(line)
 				if err != nil {
-					return err
+					if br {
+						str.WriteByte('\n')
+					}
+					br = true
+					str.WriteString(fmt.Sprintln(line))
+					continue
 				}
 				if len(zets) != 1 {
-					return fmt.Errorf("ambiguous zet ref not allowed in refbox: %q; %#v", line, zets)
+					if br {
+						str.WriteByte('\n')
+					}
+					br = true
+					str.WriteString(fmt.Sprintln(line))
+					log.Println(fmt.Errorf("ambiguous zet ref not allowed in refbox: %q; %s", line, el.Span.String()))
+					continue
 				}
 
 				z := zets[0]

@@ -14,10 +14,6 @@ func TestParseLabelspec_default(t *testing.T) {
 		t.Fatalf("Failed parsing %s to labelspec: %+v", txt, err)
 	}
 
-	if spec == nil {
-		t.Fatal("ParseLabelspec returned (spec: nil, error: nil)")
-	}
-
 	if spec.MatchLabel != "zl/inbox" {
 		t.Error("invalid MatchLabel value", spec.MatchLabel)
 	}
@@ -89,11 +85,6 @@ func TestParseLabelspec(t *testing.T) {
 			continue
 		}
 
-		if spec == nil {
-			t.Errorf("spec is nil for %s, expected to get %v, got %v", cas.txt, cas.err, err)
-			continue
-		}
-
 		if cas.res.MatchLabel != spec.MatchLabel || cas.res.MatchValue != spec.MatchValue || cas.res.Negated != spec.Negated {
 			t.Errorf("Expected %+v and %+v to match equal", cas.res, spec)
 		}
@@ -104,5 +95,21 @@ func TestLabelSpec_Met(t *testing.T) {
 	spec := zettel.Labelspec{"zl/inbox", "default", false}
 	if !spec.Match(zettel.Labels(map[string]string{"zl/inbox": "default"})) {
 		t.Fatal("zl/inbox=default not met by zl/inbox: default")
+	}
+}
+
+func TestInspiredLabelspec(t *testing.T) {
+	spec, err := zettel.ParseLabelspec("zl/inbox=default-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if spec.MatchLabel != "zl/inbox" {
+		t.Error("unexpected label", spec.MatchLabel)
+	}
+	if spec.MatchValue != "default" {
+		t.Error("unexpected value", spec.MatchValue)
+	}
+	if !spec.Negated {
+		t.Error("unexpected unnegated")
 	}
 }

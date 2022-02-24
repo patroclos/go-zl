@@ -22,6 +22,19 @@ func makeCmdList(st zettel.Storage) *cli.Command {
 		isTerm := isTerminal(os.Stdin)
 
 		printZ := func(n crawl.Node) crawl.RecurseMask {
+			if isTerminal(os.Stdout) {
+				if box, ok := n.Z.Metadata().Labels["zl/inbox"]; ok {
+					maroon := "\x1b[48;5;124m"
+					reset := "\x1b[0m"
+					template := maroon + "{{.Id}}" + reset + "  {{.Title}}"
+					if box != "default" {
+						template += "  " + maroon + `{{index .Labels "zl/inbox"}}` + reset
+					}
+					template += "\n"
+					fmt.Print(zettel.MustFmt(n.Z, template))
+					return crawl.None
+				}
+			}
 			fmt.Println(n.Z)
 			return crawl.None
 		}
