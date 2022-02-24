@@ -79,9 +79,9 @@ func ParseLabelspec(txt string) (ls Labelspec, err error) {
 		return ls, fmt.Errorf("spec is empty: %w", ErrInvalidSpecFormat)
 	}
 
-	negated := txt[0] == '-'
+	negated := strings.HasSuffix(txt, "-")
 	if negated {
-		txt = txt[1:]
+		txt = txt[:len(txt)-1]
 	}
 
 	if len(txt) == 0 {

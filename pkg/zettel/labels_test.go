@@ -8,7 +8,7 @@ import (
 )
 
 func TestParseLabelspec_default(t *testing.T) {
-	txt := "-zl/inbox=default"
+	txt := "zl/inbox=default-"
 	spec, err := zettel.ParseLabelspec(txt)
 	if err != nil {
 		t.Fatalf("Failed parsing %s to labelspec: %+v", txt, err)
@@ -59,7 +59,7 @@ func TestParseLabelspec(t *testing.T) {
 	}{
 		{"zl/inbox=hot", nil, &zettel.Labelspec{"zl/inbox", "hot", false}},
 		{"asdf", nil, &zettel.Labelspec{"asdf", "", false}},
-		{"-bsdf", nil, &zettel.Labelspec{"bsdf", "", true}},
+		{"bsdf-", nil, &zettel.Labelspec{"bsdf", "", true}},
 		{" oops", zettel.ErrInvalidSpecFormat, nil},
 		{"aga!in", zettel.ErrInvalidSpecFormat, nil},
 		{"aga!in", zettel.ErrInvalidSpecFormat, nil},
