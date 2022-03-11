@@ -1,9 +1,6 @@
 package visibility
 
 import (
-	"bufio"
-	"fmt"
-	"log"
 	"strings"
 
 	"jensch.works/zl/pkg/zettel"
@@ -18,89 +15,35 @@ type MaskView struct {
 func (v MaskView) Mask(z zettel.Zettel) (zettel.Zettel, error) {
 	return z.Rebuild(func(b zettel.Builder) error {
 		var str strings.Builder
-		elems, err := scan.Elements(v.Store, z.Readme().Text)
-		if err != nil {
-			return err
-		}
 
-		for _, el := range elems {
-			txt := el.Span.String()
+		txt := z.Readme().Text
+		boxes := scan.All(txt)
 
-			if el.Type != scan.ItemRefbox {
-				str.WriteString(txt)
-				continue
-			}
+		pos := 0
 
-			scn := bufio.NewScanner(strings.NewReader(txt))
-			scn.Scan()
-			str.WriteString(fmt.Sprintln(scn.Text()))
-			br := false
-			for scn.Scan() {
-				line := scn.Text()
-				zets, err := v.Store.Resolve(line)
+		for _, box := range boxes {
+			for i, ref := range box.Refs {
+				zl, err := v.Store.Zettel(ref[:11])
 				if err != nil {
-					if br {
-						str.WriteByte('\n')
-					}
-					br = true
-					str.WriteString(fmt.Sprintln(line))
 					continue
 				}
-				if len(zets) != 1 {
-					if br {
-						str.WriteByte('\n')
-					}
-					br = true
-					str.WriteString(fmt.Sprintln(line))
-					log.Println(fmt.Errorf("ambiguous zet ref not allowed in refbox: %q; %s", line, el.Span.String()))
-					continue
-				}
-
-				z := zets[0]
-				viz := Visible(z, v.Tolerate)
+				viz := Visible(zl, v.Tolerate)
 				if !viz {
-					log.Printf("masking %s", z)
-					z = Masked(z)
+					box.Refs[i] = "000000-MASK  MASKED"
 				}
-				if br {
-					str.WriteString("\n")
-				}
-				str.WriteString(zettel.MustFmt(z, "* {{.Id}}  {{.Title}}"))
-				br = true
 			}
+
+			if pos < box.Start {
+				str.WriteString(txt[pos:box.Start])
+			}
+			str.WriteString(box.String())
+			pos = box.End
+
+		}
+		if pos < len(txt) {
+			str.WriteString(txt[pos:])
 		}
 		b.Text(str.String())
 		return nil
 	})
-}
-
-func Masked(z zettel.Zettel) zettel.Zettel {
-	z2, e := z.Rebuild(func(b zettel.Builder) error {
-		b.Title("MASKED")
-		b.Metadata().Labels = make(zettel.Labels)
-		b.Metadata().Link = nil
-		b.Id(strings.Repeat("I", len(z.Id())))
-		return nil
-	})
-	if e != nil {
-		return z
-	}
-	return z2
-}
-
-func spanText(span scan.BlkSpan) string {
-	lines := lines(span.Input)
-	if span.Start == -1 {
-		return span.Input
-	}
-	return strings.Join(lines[span.Start:span.Pos], "\n")
-}
-
-func lines(s string) []string {
-	lins := make([]string, len(s)/80)
-	scn := bufio.NewScanner(strings.NewReader(s))
-	for scn.Scan() {
-		lins = append(lins, scn.Text())
-	}
-	return lins
 }

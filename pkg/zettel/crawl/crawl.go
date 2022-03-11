@@ -1,6 +1,7 @@
 package crawl
 
 import (
+	"fmt"
 	"log"
 	"strings"
 	"sync"
@@ -132,7 +133,8 @@ func (c *crawl) doId(id string, from Node, reason RecurseMask) {
 func (c *crawl) do(cra Node) {
 	defer c.wg.Done()
 	c.rw.Lock()
-	// TODO: masking needs to take the path into account
+	// TODO: should masking be path specific?
+	// should we take options to determine this?
 	if _, ok := c.m[cra.Z.Id()]; ok {
 		c.rw.Unlock()
 		return
@@ -146,19 +148,24 @@ func (c *crawl) do(cra Node) {
 		c.wg.Add(1)
 		go func() {
 			defer c.wg.Done()
-			scn := scan.ListScanner(c.store)
 			for iter := c.store.Iter(); iter.Next(); {
-				// TODO: cache this
-				refs := scn.Scan(strings.NewReader(iter.Zet().Readme().Text))
-				for ref := range refs {
-					if ref.Id() == cra.Z.Id() {
-						pth := make([]*Node, len(cra.Path)+1)
-						pth[len(cra.Path)] = &cra
-						for i := range cra.Path {
-							pth[i] = cra.Path[i]
+				boxes := scan.All(iter.Zet().Readme().Text)
+				for _, box := range boxes {
+					for ri, ref := range box.Refs {
+						zet, err := c.store.Zettel(ref[:11])
+						if err != nil {
+							log.Println(fmt.Errorf("inbound box on %q (%s %d) not found: %w", iter.Zet().Id(), box.Rel, ri, err))
+							continue
 						}
-						c.wg.Add(1)
-						go c.do(Node{Z: iter.Zet(), Path: pth, Reason: Inbound})
+						if zet.Id() == cra.Z.Id() {
+							pth := make([]*Node, len(cra.Path)+1)
+							pth[len(cra.Path)] = &cra
+							for i := range cra.Path {
+								pth[i] = cra.Path[i]
+							}
+							c.wg.Add(1)
+							go c.do(Node{Z: iter.Zet(), Path: pth, Reason: Inbound})
+						}
 					}
 				}
 			}
@@ -169,15 +176,22 @@ func (c *crawl) do(cra Node) {
 		c.wg.Add(1)
 		go func() {
 			defer c.wg.Done()
-			scn := scan.ListScanner(c.store)
-			for ref := range scn.Scan(strings.NewReader(cra.Z.Readme().Text)) {
-				pth := make([]*Node, len(cra.Path)+1)
-				pth[len(cra.Path)] = &cra
-				for i := range cra.Path {
-					pth[i] = cra.Path[i]
+			boxes := scan.All(cra.Z.Readme().Text)
+			for _, box := range boxes {
+				for ir, ref := range box.Refs {
+					zet, err := c.store.Zettel(ref[:11])
+					if err != nil {
+						log.Println(fmt.Errorf("inbound box on %q (%s %d) not found: %w", cra.Z.Id(), box.Rel, ir, err))
+						continue
+					}
+					pth := make([]*Node, len(cra.Path)+1)
+					pth[len(cra.Path)] = &cra
+					for i := range cra.Path {
+						pth[i] = cra.Path[i]
+					}
+					c.wg.Add(1)
+					go c.do(Node{Z: zet, Path: pth, Reason: Outbound})
 				}
-				c.wg.Add(1)
-				go c.do(Node{Z: ref, Path: pth, Reason: Outbound})
 			}
 		}()
 	}

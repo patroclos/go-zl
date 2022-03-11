@@ -27,6 +27,10 @@ func makeCmdRemove(st zettel.Storage) *cli.Command {
 			log.Fatal(err)
 		}
 
+		if *frce {
+			return st.Remove(zet)
+		}
+
 		backlinks := make([]zettel.Zettel, 0, 8)
 		crawl.New(st, func(n crawl.Node) crawl.RecurseMask {
 			if len(n.Path) == 0 {
@@ -35,10 +39,6 @@ func makeCmdRemove(st zettel.Storage) *cli.Command {
 			backlinks = append(backlinks, n.Z)
 			return crawl.None
 		}).Crawl(zet)
-
-		if *frce {
-			return st.Remove(zet)
-		}
 
 		listing := zettel.MustFmt(zet, zettel.ListingFormat)
 		fmt.Fprintln(os.Stderr, listing)
