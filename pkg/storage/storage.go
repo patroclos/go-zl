@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"os"
 	"strings"
 	"sync"
 
 	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/cache"
 	"github.com/go-git/go-git/v5/storage/filesystem"
@@ -18,6 +20,15 @@ import (
 
 func NewStore(dir billy.Filesystem) (zettel.Storage, error) {
 	return newStore(dir)
+}
+
+func FromEnv() (zettel.Storage, error) {
+	zlpath, ok := os.LookupEnv("ZLPATH")
+	if !ok {
+		return nil, fmt.Errorf("no environment variable ZLPATH found")
+	}
+	dir := osfs.New(zlpath)
+	return NewStore(dir)
 }
 
 func newStore(dir billy.Filesystem) (*zetStore, error) {
