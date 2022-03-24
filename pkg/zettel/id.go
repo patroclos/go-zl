@@ -13,7 +13,7 @@ const (
 
 var rng *rand.Rand
 
-func newId(rng *rand.Rand, t time.Time) string {
+func MakeIdAt(rng *rand.Rand, t time.Time) string {
 	ts := t.Format("060102")
 	buf := [idLen]byte{}
 	for i := 0; i < idLen; i++ {
@@ -22,9 +22,9 @@ func newId(rng *rand.Rand, t time.Time) string {
 	return fmt.Sprintf("%s-%s", ts, buf[:])
 }
 
-func newIdToday() string {
+func MakeId() string {
 	if rng == nil {
 		rng = rand.New(rand.NewSource(time.Now().UnixNano()))
 	}
-	return newId(rng, time.Now())
+	return MakeIdAt(rng, time.Now())
 }

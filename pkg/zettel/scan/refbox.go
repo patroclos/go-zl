@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-var regex = regexp.MustCompile(`(?m)^([a-zA-Z][^:\n]*):\n((?:\* [0-9]{6}-[a-zA-Z0-9]{4}  .+$\n)+)(\+ .*$(?:\n  .*$)*)?`)
+var regex = regexp.MustCompile(`(?m)^([a-zA-Z][^:\n]*):\n((?:\* [0-9]{6}-[a-zA-Z0-9]{4}  .+$)(?:\n\* [0-9]{6}-[a-zA-Z0-9]{4}  .+$)*)(\n\+ .*$(?:\n  .*$)*)?`)
 
 type Refbox struct {
 	Rel        string
@@ -59,7 +59,12 @@ func All(txt string) []Refbox {
 
 		b.Extra = make([]string, 0, 2)
 		extra := txt[match[6]:match[7]]
-		for scn := bufio.NewScanner(strings.NewReader(extra)); scn.Scan(); {
+		scn := bufio.NewScanner(strings.NewReader(extra))
+		scn.Scan()
+		for scn.Scan() {
+			if len(scn.Text()) < 2 {
+				panic(fmt.Sprintf("extra too short: %q", scn.Text()))
+			}
 			b.Extra = append(b.Extra, scn.Text()[2:])
 		}
 

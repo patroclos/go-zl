@@ -39,6 +39,8 @@ func main() {
 	root.AddCommand(makeCmdCrawl(store))
 	root.AddCommand(makeCmdSearch(store))
 	root.AddCommand(makeCmdLabel(store))
+	root.AddCommand(makeCmdTldr(store))
+	root.AddCommand(makeCmdSummary(store))
 
 	if err := root.Execute(); err != nil {
 		log.Fatal(err)

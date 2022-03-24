@@ -70,13 +70,13 @@ func TestParseLabelspec(t *testing.T) {
 	for _, cas := range cases {
 		spec, err := zettel.ParseLabelspec(cas.txt)
 		if cas.err == nil && err != nil {
-			t.Errorf("Expected to parse %s but got %w", cas.txt, err)
+			t.Errorf("Expected to parse %s but got %v", cas.txt, err)
 			continue
 		}
 
 		if cas.err != nil {
 			if !errors.Is(err, cas.err) {
-				t.Errorf("Expected error of type %v, but got %w", cas.err, err)
+				t.Errorf("Expected error of type %v, but got %v", cas.err, err)
 			}
 			continue
 		}

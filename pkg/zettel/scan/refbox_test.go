@@ -65,3 +65,11 @@ func TestRefboxAll(t *testing.T) {
 		t.Errorf("expected refbox.String to match original input, got %#v", str)
 	}
 }
+
+func TestRefboxNoTrailingNewline(t *testing.T) {
+	txt := "Refs:\n* 220101-blub  TITLE"
+	all := All(txt)
+	if l := len(all); l != 1 {
+		t.Errorf("expected to parse 1 refbox from %q, got %d", txt, l)
+	}
+}

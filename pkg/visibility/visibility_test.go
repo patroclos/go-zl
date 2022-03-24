@@ -1,6 +1,7 @@
 package visibility
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/go-git/go-billy/v5/memfs"
@@ -11,31 +12,32 @@ import (
 
 func TestTaintView(t *testing.T) {
 	st, _ := storage.NewStore(memfs.New())
-	zl, _ := zettel.Build(func(b zettel.Builder) error {
-		b.Id("one")
+	id1, id2 := zettel.MakeId(), zettel.MakeId()
+	a, _ := zettel.Build(func(b zettel.Builder) error {
+		b.Id(id1)
 		b.Title("one")
-		b.Text("Refs:\n* two  Two")
+		b.Text(fmt.Sprintf("Refs:\n* %s  Two", id2))
 		return nil
 	})
-	st.Put(zl)
-	zl, _ = zettel.Build(func(b zettel.Builder) error {
-		b.Id("two")
+	b, _ := zettel.Build(func(b zettel.Builder) error {
+		b.Id(id2)
 		b.Title("Two")
-		b.Text("Refs:\n* one  One")
+		b.Text(fmt.Sprintf("Refs:\n* %s  One", id1))
 		b.Metadata().Labels["zl/taint"] = "sensitive"
 		return nil
 	})
-	st.Put(zl)
+	st.Put(a)
+	st.Put(b)
 
 	visited := make([]zettel.Zettel, 0)
 	inner := func(n crawl.Node) crawl.RecurseMask {
 		visited = append(visited, n.Z)
+		t.Log("visit", n.Z)
 		return crawl.All
 	}
 	taintView := TaintView(inner, []string{"sensitive"})
 
-	zl, _ = st.Zettel("one")
-	crawl.New(st, taintView).Crawl(zl)
+	crawl.New(st, taintView).Crawl(a)
 
 	if len(visited) != 2 {
 		t.Errorf("expected 2 hits, got %d", len(visited))
@@ -48,7 +50,7 @@ func TestTaintView(t *testing.T) {
 	}
 	taintView = TaintView(inner, nil)
 
-	crawl.New(st, taintView).Crawl(zl)
+	crawl.New(st, taintView).Crawl(a)
 
 	if len(visited) != 1 {
 		t.Errorf("expected 1 result, got %d", len(visited))
