@@ -2,6 +2,9 @@ package scan
 
 import (
 	"testing"
+
+	"jensch.works/zl/pkg/storage"
+	"jensch.works/zl/pkg/zettel"
 )
 
 const pattern = `(?m)^([a-zA-Z][^:\n]*):\n((?:\* [0-9]{6}-[a-zA-Z]{4}  .+$\n)+)(\+ .*$(?:\n  .*$)*)?`
@@ -71,5 +74,13 @@ func TestRefboxNoTrailingNewline(t *testing.T) {
 	all := All(txt)
 	if l := len(all); l != 1 {
 		t.Errorf("expected to parse 1 refbox from %q, got %d", txt, l)
+	}
+}
+
+func TestRefboxUri(t *testing.T) {
+	txt := "Refs:\n* <https://jensch.dev>"
+	all := All(txt)
+	if l := len(all); l != 1 {
+		t.Errorf("expected %q to contain a refbox, got %d", txt, l)
 	}
 }

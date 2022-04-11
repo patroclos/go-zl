@@ -7,7 +7,11 @@ import (
 	"strings"
 )
 
-var regex = regexp.MustCompile(`(?m)^([a-zA-Z][^:\n]*):\n((?:\* [0-9]{6}-[a-zA-Z0-9]{4}  .+$)(?:\n\* [0-9]{6}-[a-zA-Z0-9]{4}  .+$)*)(\n\+ .*$(?:\n  .*$)*)?`)
+const (
+	refLine = `\* (?:<.+>$|[0-9]{6}-[a-zA-Z0-9]{4}  .+$)`
+)
+
+var regex = regexp.MustCompile(fmt.Sprintf(`(?m)^([a-zA-Z][^:\n]*):\n((?:%s)(?:\n%s)*)(\n\+ .*$(?:\n  .*$)*)?`, refLine, refLine))
 
 type Refbox struct {
 	Rel        string
