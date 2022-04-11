@@ -30,3 +30,16 @@ type ZettelerIter interface {
 	Zetteler
 	Iter() Iterator
 }
+
+func All(st ZettelerIter) []Zettel {
+	iter := st.Iter()
+	var zets []Zettel = nil
+	if iter.Next() {
+		zets = make([]Zettel, 1, 512)
+		zets[0] = iter.Zet()
+	}
+	for iter.Next() {
+		zets = append(zets, iter.Zet())
+	}
+	return zets
+}
