@@ -19,7 +19,7 @@ func (spec depthCrawler) Crawl(c crawl.Node) crawl.RecurseMask {
 	if spec.max > 0 && len(c.Path) > spec.max {
 		return crawl.None
 	}
-	fmt.Println(zettel.MustFmt(c.Z, zettel.ListingFormat))
+	fmt.Println(printZet(c.Z))
 	return crawl.All
 }
 

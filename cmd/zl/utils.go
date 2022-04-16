@@ -38,3 +38,18 @@ func isTerminal(f *os.File) bool {
 
 	return (o.Mode() & os.ModeCharDevice) == os.ModeCharDevice
 }
+
+func printZet(z zettel.Zettel) string {
+	if isTerminal(os.Stdout) {
+		if box, ok := z.Metadata().Labels["zl/inbox"]; ok {
+			gray := "\x1b[38;5;242m"
+			reset := "\x1b[0m"
+			template := gray + "{{.Id}}" + reset + "  {{.Title}}"
+			if box != "default" {
+				template += "  " + gray + `{{index .Labels "zl/inbox"}}` + reset
+			}
+			return fmt.Sprint(zettel.MustFmt(z, template))
+		}
+	}
+	return fmt.Sprint(z)
+}

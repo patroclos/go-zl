@@ -2,9 +2,6 @@ package scan
 
 import (
 	"testing"
-
-	"jensch.works/zl/pkg/storage"
-	"jensch.works/zl/pkg/zettel"
 )
 
 const pattern = `(?m)^([a-zA-Z][^:\n]*):\n((?:\* [0-9]{6}-[a-zA-Z]{4}  .+$\n)+)(\+ .*$(?:\n  .*$)*)?`
