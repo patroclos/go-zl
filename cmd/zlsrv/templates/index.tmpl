@@ -1,12 +1,29 @@
 <html>
 	<head>
+		<title>zlsrv</title>
 	</head>
 	<body>
-		<h1>Hello, World!</h1>
 		{{ range . }}
 			<div class="zet">
-			{{ .Rendered }}
+				<a href="#{{.Z.Id}}">{{.Z.Id}}</a>
+				{{ .Rendered }}
 			</div>
 		{{ end }}
+
+<style>
+html, body {
+	margin: 0;
+	padding: 0;
+}
+a.in-feed {
+	color: rgb(34,34,34);
+}
+.zet {
+	border: 2px dotted gray;
+	margin: 10px;
+	padding: 2px 5px;
+	font-family: monospace;
+}
+</style>
 	</body>
 </html>

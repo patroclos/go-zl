@@ -27,8 +27,9 @@ type BoxData struct {
 }
 
 type BoxRefData struct {
-	Url  string
-	Text string
+	Url    string
+	Text   string
+	InFeed bool
 }
 
 func (c *ZetRenderer) Rendered() (html template.HTML) {
@@ -68,7 +69,7 @@ func (c *ZetRenderer) refbox(rb scan.Refbox) {
 	for _, rel := range rb.Refs {
 		if strings.HasPrefix(rel, "<") && strings.HasSuffix(rel, ">") {
 			rel = rel[1 : len(rel)-1]
-			data.Refs = append(data.Refs, BoxRefData{rel, rel})
+			data.Refs = append(data.Refs, BoxRefData{rel, rel, false})
 			continue
 		}
 
@@ -79,7 +80,14 @@ func (c *ZetRenderer) refbox(rb scan.Refbox) {
 		}
 
 		url := c.urlTo(refZet.Id())
-		data.Refs = append(data.Refs, BoxRefData{url, refZet.Readme().Title})
+		hasZet := false
+		for i := range c.Feed {
+			if c.Feed[i] == refZet.Id() {
+				hasZet = true
+				break
+			}
+		}
+		data.Refs = append(data.Refs, BoxRefData{url, refZet.Readme().Title, hasZet})
 	}
 	c.Tmpl.ExecuteTemplate(&c.sb, "refbox.tmpl", data)
 }

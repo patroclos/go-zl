@@ -3,7 +3,7 @@
 	<ul>
 	{{ range .Refs }}
 		<li>
-			<a href="{{.Url}}">{{.Text}}</a>
+			<a href="{{.Url}}" {{if .InFeed}}class="in-feed"{{end}}>{{.Text}}</a>
 		</li>
 	{{ end }}
 	</ul>
