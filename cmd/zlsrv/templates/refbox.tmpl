@@ -1,0 +1,10 @@
+<div class="refbox">
+	<h3 class="relation">{{.Rel}}</h3>
+	<ul>
+	{{ range .Refs }}
+		<li>
+			<a href="{{.Url}}">{{.Text}}</a>
+		</li>
+	{{ end }}
+	</ul>
+</div>

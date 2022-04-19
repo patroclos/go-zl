@@ -1,17 +1,34 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+	"path"
 	"strings"
 
+	"github.com/gin-gonic/gin"
 	"github.com/go-git/go-billy/v5/osfs"
 	"jensch.works/zl/pkg/storage"
 	"jensch.works/zl/pkg/zettel"
-	"jensch.works/zl/pkg/zettel/crawl"
 )
+
+type UrlMaker struct {
+	Base *url.URL
+}
+
+func (x UrlMaker) MakeUrl(feed []string, focus *string) *url.URL {
+	if focus == nil {
+		url, _ := x.Base.Parse(fmt.Sprintf("%s", strings.Join(feed, ",")))
+		return url
+	}
+
+	url, _ := x.Base.Parse(fmt.Sprintf("%s#%s", strings.Join(feed, ","), *focus))
+	return url
+}
 
 func main() {
 	zlpath, ok := os.LookupEnv("ZLPATH")
@@ -25,126 +42,93 @@ func main() {
 		log.Fatal(err)
 	}
 
-	srv := server{st: store}
-	srv.Bind()
-	if err := http.ListenAndServe(":8000", nil); err != nil {
-		log.Println(err)
-	}
-}
+	r := gin.Default()
+	r.SetTrustedProxies(nil)
 
-type server struct {
-	st zettel.Storage
-}
-
-func (s server) Bind() {
-	http.HandleFunc("/", s.root)
-	http.HandleFunc("/zet/", s.zet)
-}
-
-func (s server) root(rw http.ResponseWriter, req *http.Request) {
-	txt := `
-<html>
-<head>
-<title>zetsrv</title>
-</head>
-<body>
-<style>
-* {
-background-color: black;
-color: white;
-}
-</style>
-<ul>
-{{range $z := .}}
-<li><a href="/zet/{{$z.Id}}">{{$z.Id}}  {{$z.Readme.Title}}</a></li>
-{{end}}
-</ul>
-</body>
-</html>
-	`
-	tmpl, err := template.New("root").Parse(txt)
+	tmpl, err := template.ParseGlob("templates/*")
 	if err != nil {
-		rw.WriteHeader(http.StatusInternalServerError)
-		rw.Write([]byte(err.Error()))
-		return
+		log.Fatal(err)
 	}
+	r.SetHTMLTemplate(tmpl)
 
-	zets := make([]zettel.Zettel, 0, 1024)
-	for it := s.st.Iter(); it.Next(); {
-		zets = append(zets, it.Zet())
-	}
-	tmpl.Execute(rw, zets)
-}
-
-type zet struct {
-	Z   zettel.Zettel
-	In  []zettel.Zettel
-	Out []zettel.Zettel
-}
-
-func (s server) zet(rw http.ResponseWriter, req *http.Request) {
-	comps := strings.Split(req.URL.Path, "/")[2:]
-	id := comps[0]
-	zl, err := s.st.Zettel(id)
-	if err != nil {
-		rw.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	in, out := make([]zettel.Zettel, 0, 32), make([]zettel.Zettel, 0, 8)
-
-	crawl.New(s.st, func(n crawl.Node) crawl.RecurseMask {
-		if len(n.Path) == 0 {
-			return crawl.All
+	r.GET("/:zets", func(ctx *gin.Context) {
+		ids := strings.Split(ctx.Param("zets"), ",")
+		zets := make(map[string]zettel.Zettel, len(ids))
+		for _, id := range ids {
+			zet, err := store.Zettel(id)
+			if err != nil {
+				ctx.AbortWithError(http.StatusNotFound, err)
+				return
+			}
+			zets[zet.Id()] = zet
 		}
 
-		if n.Reason&crawl.Inbound != 0 {
-			in = append(in, n.Z)
+		renderers := make([]ZetRenderer, 0, len(zets))
+		base := new(url.URL)
+		*base = *ctx.Request.URL
+		base.Path = path.Dir(base.Path)
+		for _, id := range ids {
+			renderers = append(renderers, ZetRenderer{
+				Z:       zets[id],
+				Feed:    ids,
+				MakeUrl: UrlMaker{base}.MakeUrl,
+				Store:   store,
+				Tmpl:    tmpl,
+			})
 		}
-		if n.Reason&crawl.Outbound != 0 {
-			out = append(out, n.Z)
-		}
-		return crawl.None
-	}).Crawl(zl)
 
-	txt := `
-<html>
-<head>
-<title>{{.Z.Readme.Title}}</title>
-</head>
-<body>
-<style>
-* {
-background-color: black;
-color: white;
-text-decoration: none;
+		ctx.HTML(http.StatusOK, "index.tmpl", renderers)
+	})
+
+	api := r.Group("api")
+	api.Use(cors)
+	api.GET("zettel/:zet", func(ctx *gin.Context) {
+		id := ctx.Param("zet")
+		zet, err := store.Zettel(id)
+		if err != nil {
+			ctx.AbortWithError(http.StatusNotFound, err)
+		}
+
+		data := map[string]interface{}{
+			"id": zet.Id(),
+			"readme": map[string]string{
+				"title": zet.Readme().Title,
+				"text":  zet.Readme().Text,
+			},
+		}
+		meta := zet.Metadata()
+		if meta != nil {
+			mdata := map[string]interface{}{
+				"creationTimestamp": meta.CreateTime,
+				"labels":            meta.Labels,
+			}
+			data["meta"] = mdata
+		}
+		ctx.JSON(http.StatusOK, data)
+	})
+
+	if err := r.Run(":8000"); err != nil {
+		log.Fatal(err)
+	}
 }
-</style>
-<pre>{{.Z.Readme}}</pre>
-<h2>Inbound</h2>
-<ul>
-{{ range $z := .In }}
-<li><a href="/zet/{{$z.Id}}">{{$z.Id}}  {{$z.Readme.Title}}</a></li>
-{{ end }}
-</ul>
-<h2>Outbound</h2>
-{{ range $z := .Out }}
-<li><a href="/zet/{{$z.Id}}">{{$z.Id}}  {{$z.Readme.Title}}</a></li>
-{{ end }}
-</body>
-</html>
-	`
-	tmpl, err := template.New("zet").Parse(txt)
-	if err != nil {
-		rw.WriteHeader(http.StatusInternalServerError)
-		rw.Write([]byte(err.Error()))
+
+func cors(ctx *gin.Context) {
+	origin := ctx.Request.Header.Get("Origin")
+	if len(origin) == 0 {
+		return
+	}
+	host := ctx.Request.Host
+
+	if origin == "http://"+host || origin == "https://"+host {
 		return
 	}
 
-	log.Println(in, out)
-	if err := tmpl.Execute(rw, zet{Z: zl, In: in, Out: out}); err != nil {
-		rw.WriteHeader(http.StatusInternalServerError)
-		rw.Write([]byte(err.Error()))
-		return
+	header := ctx.Writer.Header()
+	header.Set("Access-Control-Allow-Origin", "*")
+	header.Set("Access-Control-Allow-Headers", "*")
+	if ctx.Request.Method == http.MethodOptions {
+		ctx.AbortWithStatus(http.StatusNoContent)
+	} else {
+		ctx.Next()
 	}
 }
