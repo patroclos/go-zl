@@ -57,7 +57,7 @@ func makeCmdLabel(st zettel.Storage) *cli.Command {
 	return cmd
 }
 
-func stampLabels(z zettel.Zettel, spec zettel.Labelspec) (zettel.Zettel, error) {
+func stampLabels(z zettel.Z, spec zettel.Labelspec) (zettel.Z, error) {
 	return z.Rebuild(func(b zettel.Builder) error {
 		m := b.Metadata()
 		val, ok := m.Labels[spec.MatchLabel]

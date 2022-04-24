@@ -55,7 +55,7 @@ func (m RecurseMask) String() string {
 }
 
 type Node struct {
-	Z      zettel.Zettel
+	Z      zettel.Z
 	Path   []*Node
 	Reason RecurseMask
 }
@@ -63,7 +63,7 @@ type Node struct {
 type CrawlFn func(Node) RecurseMask
 
 type Crawler interface {
-	Crawl(...zettel.Zettel)
+	Crawl(...zettel.Z)
 }
 
 type crawlData struct {
@@ -75,7 +75,7 @@ func New(st zettel.ZettelerIter, f CrawlFn) Crawler {
 	return crawlData{st: st, f: f}
 }
 
-func (b crawlData) Crawl(zets ...zettel.Zettel) {
+func (b crawlData) Crawl(zets ...zettel.Z) {
 	cr := &crawl{
 		store:   b.st,
 		m:       make(map[string]struct{}),
@@ -88,7 +88,7 @@ func (b crawlData) Crawl(zets ...zettel.Zettel) {
 }
 
 type crawl struct {
-	root    []zettel.Zettel
+	root    []zettel.Z
 	crawler CrawlFn
 	store   zettel.ZettelerIter
 	m       map[string]struct{}

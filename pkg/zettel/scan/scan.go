@@ -10,7 +10,7 @@ import (
 )
 
 type Scanner interface {
-	Scan(r io.Reader) <-chan zettel.Zettel
+	Scan(r io.Reader) <-chan zettel.Z
 }
 
 type listScanner struct {
@@ -23,17 +23,17 @@ func ListScanner(z Zettler) Scanner {
 	}
 }
 
-func (p listScanner) Scan(r io.Reader) <-chan zettel.Zettel {
-	c := make(chan zettel.Zettel)
+func (p listScanner) Scan(r io.Reader) <-chan zettel.Z {
+	c := make(chan zettel.Z)
 	go scan(c, p.z, r)
 	return c
 }
 
 type Zettler interface {
-	Zettel(id string) (zettel.Zettel, error)
+	Zettel(id string) (zettel.Z, error)
 }
 
-func scan(c chan<- zettel.Zettel, st Zettler, r io.Reader) {
+func scan(c chan<- zettel.Z, st Zettler, r io.Reader) {
 	defer close(c)
 	scn := bufio.NewScanner(r)
 	reg := regexp.MustCompile(`\[.+\]\((.+)\)`)

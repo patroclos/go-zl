@@ -10,7 +10,7 @@ import (
 type iter struct {
 	dir     billy.Filesystem
 	files   []fs.FileInfo
-	current zettel.Zettel
+	current zettel.Z
 }
 
 func (i *iter) Next() bool {
@@ -57,7 +57,7 @@ func (i *iter) Next() bool {
 	return true
 }
 
-func (i *iter) Zet() zettel.Zettel {
+func (i *iter) Zet() zettel.Z {
 	if i.current == nil {
 		panic("you are cringe")
 	}

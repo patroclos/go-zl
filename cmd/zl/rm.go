@@ -31,7 +31,7 @@ func makeCmdRemove(st zettel.Storage) *cli.Command {
 			return st.Remove(zet)
 		}
 
-		backlinks := make([]zettel.Zettel, 0, 8)
+		backlinks := make([]zettel.Z, 0, 8)
 		crawl.New(st, func(n crawl.Node) crawl.RecurseMask {
 			if len(n.Path) == 0 {
 				return crawl.Inbound

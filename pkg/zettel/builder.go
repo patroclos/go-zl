@@ -12,7 +12,7 @@ type Builder interface {
 	Metadata() *MetaInfo
 }
 
-func Build(fn func(b Builder) error) (Zettel, error) {
+func Build(fn func(b Builder) error) (Z, error) {
 	b := newBuilder()
 
 	if err := fn(b); err != nil {

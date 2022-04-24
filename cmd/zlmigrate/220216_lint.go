@@ -59,7 +59,7 @@ func makeCmdLint() *cli.Command {
 	return cmd
 }
 
-func (l linter) lint(z zettel.Zettel) {
+func (l linter) lint(z zettel.Z) {
 	defer l.wg.Done()
 
 	scn := bufio.NewScanner(strings.NewReader(z.Readme().Text))

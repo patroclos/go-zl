@@ -31,7 +31,7 @@ type inboxData struct {
 	Due time.Time
 }
 
-func MustFmt(zl Zettel, format string) string {
+func MustFmt(zl Z, format string) string {
 	txt, err := Fmt(zl, format)
 	if err != nil {
 		panic(err)
@@ -40,7 +40,7 @@ func MustFmt(zl Zettel, format string) string {
 	return txt
 }
 
-func Fmt(in Zettel, format string) (string, error) {
+func Fmt(in Z, format string) (string, error) {
 	zl := toFormatData(in)
 	tmpl, err := template.New("fmt").Parse(format)
 	if err != nil {
@@ -55,7 +55,7 @@ func Fmt(in Zettel, format string) (string, error) {
 	return txt, nil
 }
 
-func toFormatData(zl Zettel) *formatData {
+func toFormatData(zl Z) *formatData {
 	data := &formatData{
 		Id:    string(zl.Id()),
 		Title: zl.Readme().Title,

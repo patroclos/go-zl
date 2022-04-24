@@ -62,7 +62,7 @@ func (s server) root(ctx *gin.Context) {
 
 func (s server) getFeed(ctx *gin.Context) {
 	ids := strings.Split(ctx.Param("zets"), ",")
-	zets := make(map[string]zettel.Zettel, len(ids))
+	zets := make(map[string]zettel.Z, len(ids))
 	for _, id := range ids {
 		zet, err := s.store.Zettel(id)
 		if err != nil {

@@ -14,7 +14,7 @@ func TaintView(inner crawl.CrawlFn, tolerate []string) crawl.CrawlFn {
 	}
 }
 
-func Visible(z zettel.Zettel, tolerate []string) bool {
+func Visible(z zettel.Z, tolerate []string) bool {
 	if len(tolerate) == 1 && tolerate[0] == "*" {
 		return true
 	}

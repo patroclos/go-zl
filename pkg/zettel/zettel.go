@@ -11,14 +11,14 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type Zettel interface {
+type Z interface {
 	Id() string
 	Readme() Readme
 	Metadata() *MetaInfo
-	Rebuild(fn func(Builder) error) (Zettel, error)
+	Rebuild(fn func(Builder) error) (Z, error)
 }
 
-func Read(id string, zd billy.Filesystem) (Zettel, error) {
+func Read(id string, zd billy.Filesystem) (Z, error) {
 	f, err := zd.Open("README.md")
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func Read(id string, zd billy.Filesystem) (Zettel, error) {
 	return z, nil
 }
 
-func Write(zet Zettel, dir billy.Filesystem) error {
+func Write(zet Z, dir billy.Filesystem) error {
 	if err := writeReadme(zet, dir); err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func Write(zet Zettel, dir billy.Filesystem) error {
 	return nil
 }
 
-func writeReadme(zet Zettel, dir billy.Filesystem) error {
+func writeReadme(zet Z, dir billy.Filesystem) error {
 	readme := zet.Readme()
 	fReadme, err := dir.Create("README.md")
 	if err != nil {
@@ -75,7 +75,7 @@ func writeReadme(zet Zettel, dir billy.Filesystem) error {
 	return nil
 }
 
-func writeMeta(zet Zettel, dir billy.Filesystem) error {
+func writeMeta(zet Z, dir billy.Filesystem) error {
 	meta := zet.Metadata()
 	fMeta, err := dir.Create("meta.yaml")
 	if err != nil {
@@ -121,7 +121,7 @@ type zet struct {
 func (z *zet) Id() string          { return z.id }
 func (z *zet) Readme() Readme      { return z.readme }
 func (z *zet) Metadata() *MetaInfo { return &z.meta }
-func (z *zet) Rebuild(fn func(Builder) error) (Zettel, error) {
+func (z *zet) Rebuild(fn func(Builder) error) (Z, error) {
 	b := z.toBuilder()
 	if err := fn(b); err != nil {
 		return nil, err

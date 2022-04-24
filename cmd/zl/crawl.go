@@ -45,7 +45,7 @@ func makeCmdCrawl(store zettel.Storage) *cli.Command {
 		}
 
 		scn := scan.ListScanner(store)
-		zets := make([]zettel.Zettel, 0, 16)
+		zets := make([]zettel.Z, 0, 16)
 		for zet := range scn.Scan(os.Stdin) {
 			zets = append(zets, zet)
 		}

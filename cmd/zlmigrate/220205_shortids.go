@@ -28,7 +28,7 @@ func makeCmdShortIds() *cli.Command {
 			return err
 		}
 
-		counterparts := make(map[string]zettel.Zettel)
+		counterparts := make(map[string]zettel.Z)
 		olds := make([]string, 0, 1024)
 
 		scn := scan.ListScanner(src)
@@ -84,7 +84,7 @@ func makeCmdShortIds() *cli.Command {
 		for _, id := range olds {
 			new := counterparts[id]
 			r := strings.NewReader(new.Readme().Text)
-			refs := make([]zettel.Zettel, 0, 8)
+			refs := make([]zettel.Z, 0, 8)
 			for ref := range scn.Scan(r) {
 				refs = append(refs, ref)
 			}

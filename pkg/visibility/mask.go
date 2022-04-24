@@ -12,7 +12,7 @@ type MaskView struct {
 	Tolerate []string
 }
 
-func (v MaskView) Mask(z zettel.Zettel) (zettel.Zettel, error) {
+func (v MaskView) Mask(z zettel.Z) (zettel.Z, error) {
 	return z.Rebuild(func(b zettel.Builder) error {
 		var str strings.Builder
 

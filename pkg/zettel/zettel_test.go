@@ -7,7 +7,7 @@ import (
 
 func TestZetType(t *testing.T) {
 	zl := &zet{}
-	var _ Zettel = zl
+	var _ Z = zl
 }
 
 func nullBuilder(b Builder) error { return nil }

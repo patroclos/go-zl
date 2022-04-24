@@ -7,7 +7,7 @@ import (
 	"jensch.works/zl/pkg/zettel"
 )
 
-func pickOne(zets []zettel.Zettel) (zettel.Zettel, error) {
+func pickOne(zets []zettel.Z) (zettel.Z, error) {
 	switch len(zets) {
 	case 0:
 		return nil, fmt.Errorf("no zettels to pick")
@@ -39,7 +39,7 @@ func isTerminal(f *os.File) bool {
 	return (o.Mode() & os.ModeCharDevice) == os.ModeCharDevice
 }
 
-func printZet(z zettel.Zettel) string {
+func printZet(z zettel.Z) string {
 	if isTerminal(os.Stdout) {
 		if box, ok := z.Metadata().Labels["zl/inbox"]; ok {
 			gray := "\x1b[38;5;242m"

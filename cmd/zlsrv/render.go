@@ -13,7 +13,7 @@ import (
 )
 
 type ZetRenderer struct {
-	Z       zettel.Zettel
+	Z       zettel.Z
 	Feed    []string
 	MakeUrl func([]string, *string) *url.URL
 	Store   zettel.ZettelerIter

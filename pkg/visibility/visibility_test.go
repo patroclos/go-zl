@@ -29,7 +29,7 @@ func TestTaintView(t *testing.T) {
 	st.Put(a)
 	st.Put(b)
 
-	visited := make([]zettel.Zettel, 0)
+	visited := make([]zettel.Z, 0)
 	inner := func(n crawl.Node) crawl.RecurseMask {
 		visited = append(visited, n.Z)
 		t.Log("visit", n.Z)
@@ -43,7 +43,7 @@ func TestTaintView(t *testing.T) {
 		t.Errorf("expected 2 hits, got %d", len(visited))
 	}
 
-	visited = make([]zettel.Zettel, 0)
+	visited = make([]zettel.Z, 0)
 	inner = func(n crawl.Node) crawl.RecurseMask {
 		visited = append(visited, n.Z)
 		return crawl.All

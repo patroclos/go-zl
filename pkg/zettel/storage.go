@@ -1,21 +1,21 @@
 package zettel
 
 type Zetteler interface {
-	Zettel(id string) (Zettel, error)
+	Zettel(id string) (Z, error)
 }
 
 type Putter interface {
-	Put(Zettel) error
+	Put(Z) error
 }
 
 type Resolver interface {
 	// Find a non-empty []Zettel matching the given query
-	Resolve(query string) ([]Zettel, error)
+	Resolve(query string) ([]Z, error)
 }
 
 type Iterator interface {
 	Next() bool
-	Zet() Zettel
+	Zet() Z
 }
 
 type Storage interface {
@@ -23,7 +23,7 @@ type Storage interface {
 	Putter
 	Resolver
 	Iter() Iterator
-	Remove(Zettel) error
+	Remove(Z) error
 }
 
 type ZettelerIter interface {
@@ -31,11 +31,11 @@ type ZettelerIter interface {
 	Iter() Iterator
 }
 
-func All(st ZettelerIter) []Zettel {
+func All(st ZettelerIter) []Z {
 	iter := st.Iter()
-	var zets []Zettel = nil
+	var zets []Z = nil
 	if iter.Next() {
-		zets = make([]Zettel, 1, 512)
+		zets = make([]Z, 1, 512)
 		zets[0] = iter.Zet()
 	}
 	for iter.Next() {

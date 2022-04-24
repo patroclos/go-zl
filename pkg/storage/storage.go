@@ -58,7 +58,7 @@ type zetStore struct {
 	rw  *sync.RWMutex
 }
 
-func (zs *zetStore) Zettel(id string) (zettel.Zettel, error) {
+func (zs *zetStore) Zettel(id string) (zettel.Z, error) {
 	chr, err := zs.dir.Chroot(id)
 	if err != nil {
 		return nil, err
@@ -71,19 +71,19 @@ func (zs *zetStore) Iter() zettel.Iterator {
 	return &iter{dir: zs.dir}
 }
 
-func (zs *zetStore) Resolve(query string) ([]zettel.Zettel, error) {
+func (zs *zetStore) Resolve(query string) ([]zettel.Z, error) {
 	query = strings.TrimPrefix(query, "* ")
 	if zl, err := zs.Zettel(query); err == nil {
-		return []zettel.Zettel{zl}, nil
+		return []zettel.Z{zl}, nil
 	}
 
 	if split := strings.Split(query, "  "); len(split) > 1 {
 		if zl, err := zs.Zettel(split[0]); err == nil {
-			return []zettel.Zettel{zl}, nil
+			return []zettel.Z{zl}, nil
 		}
 	}
 
-	partialMatches := make([]zettel.Zettel, 0, 8)
+	partialMatches := make([]zettel.Z, 0, 8)
 	infos, err := zs.dir.ReadDir("")
 	if err != nil {
 		return nil, err
@@ -113,7 +113,7 @@ func (zs *zetStore) Resolve(query string) ([]zettel.Zettel, error) {
 	return nil, fmt.Errorf("couldn't resolve %s", query)
 }
 
-func (zs *zetStore) Put(zl zettel.Zettel) error {
+func (zs *zetStore) Put(zl zettel.Z) error {
 	zs.rw.Lock()
 	defer zs.rw.Unlock()
 
@@ -156,7 +156,7 @@ func (zs *zetStore) Put(zl zettel.Zettel) error {
 	return nil
 }
 
-func (zs *zetStore) Remove(zet zettel.Zettel) error {
+func (zs *zetStore) Remove(zet zettel.Z) error {
 	id := zet.Id()
 	zs.rw.Lock()
 	defer zs.rw.Unlock()
