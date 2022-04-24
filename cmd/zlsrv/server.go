@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"strings"
 
@@ -41,11 +42,22 @@ func NewServer(store zettel.Storage) (*gin.Engine, error) {
 }
 
 func (s server) Bind() {
+	s.engine.GET("/", s.root)
 	s.engine.GET("/:zets", s.getFeed)
 
 	api := s.engine.Group("api")
 	api.Use(cors)
 	api.GET("zettel/:zet", s.apiGetZet)
+}
+
+func (s server) root(ctx *gin.Context) {
+	entry, ok := os.LookupEnv("ZLSRV_ENTRYPOINT")
+	if !ok {
+		ctx.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	ctx.Redirect(http.StatusFound, entry)
 }
 
 func (s server) getFeed(ctx *gin.Context) {

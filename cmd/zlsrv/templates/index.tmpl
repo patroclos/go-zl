@@ -1,11 +1,19 @@
 <html>
 	<head>
-		<title>zlsrv</title>
+		{{ if eq (len .) 0 }}
+			<title>zlsrv</title>
+		{{else if gt (len .) 1 }}
+			<title>{{(index . 0).Z.Readme.Title}} +{{(len .)}}</title>
+		{{else}}
+			<title>{{(index . 0).Z.Readme.Title}}</title>
+		{{end}}
 	</head>
 	<body>
 		{{ range . }}
 			<div class="zet">
-				<a href="#{{.Z.Id}}">{{.Z.Id}}</a>
+				<a href="#{{.Z.Id}}">&num;</a>
+				<a id="{{.Z.Id}}" href="/{{.Z.Id}}">{{.Z.Id}}</a>
+				<a href="{{.CloseHref}}" class="close">close</a>
 				{{ .Rendered }}
 			</div>
 		{{ end }}
@@ -23,6 +31,15 @@ a.in-feed {
 	margin: 10px;
 	padding: 2px 5px;
 	font-family: monospace;
+}
+
+.zet h2,h3 {
+	margin-top: 5px;
+}
+
+.zet a.close {
+	text-decoration: none;
+	float: right;
 }
 </style>
 	</body>
