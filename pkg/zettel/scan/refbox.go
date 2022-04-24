@@ -11,7 +11,7 @@ const (
 	refLine = `\* (?:<.+>$|[0-9]{6}-[a-zA-Z0-9]{4}  .+$)`
 )
 
-var regex = regexp.MustCompile(fmt.Sprintf(`(?m)^([a-zA-Z][^:\n]*):\n((?:%s)(?:\n%s)*)(\n\+ .*$(?:\n  .*$)*)?`, refLine, refLine))
+var regex = regexp.MustCompile(fmt.Sprintf(`(?m)^([a-zA-Z\[][^:\n]*):\n((?:%s)(?:\n%s)*)(\n\+ .*$(?:\n  .*$)*)?`, refLine, refLine))
 
 type Refbox struct {
 	Rel        string
