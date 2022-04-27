@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -15,6 +16,9 @@ import (
 
 //go:embed templates
 var tmplFs embed.FS
+
+//go:embed assets/*
+var assetFs embed.FS
 
 type server struct {
 	templates *template.Template
@@ -43,6 +47,12 @@ func NewServer(store zettel.Storage) (*gin.Engine, error) {
 
 func (s server) Bind() {
 	s.engine.GET("/", s.root)
+	assets, _ := assetFs.ReadDir("assets")
+	for _, file := range assets {
+		s.engine.GET(fmt.Sprintf("/%s", file.Name()), func(ctx *gin.Context) {
+			ctx.FileFromFS(fmt.Sprintf("assets/%s", file.Name()), http.FS(assetFs))
+		})
+	}
 	s.engine.GET("/:zets", s.getFeed)
 
 	api := s.engine.Group("api")
@@ -66,23 +76,30 @@ func (s server) getFeed(ctx *gin.Context) {
 	for _, id := range ids {
 		zet, err := s.store.Zettel(id)
 		if err != nil {
-			ctx.AbortWithError(http.StatusNotFound, err)
-			return
+			continue
 		}
 		zets[zet.Id()] = zet
 	}
+
+	blinks := &Backlinks{s: s.store}
+	blinks.refresh()
 
 	renderers := make([]ZetRenderer, 0, len(zets))
 	base := new(url.URL)
 	*base = *ctx.Request.URL
 	base.Path = path.Dir(base.Path)
 	for _, id := range ids {
+		zet, ok := zets[id]
+		if !ok {
+			continue
+		}
 		renderers = append(renderers, ZetRenderer{
-			Z:       zets[id],
+			Z:       zet,
 			Feed:    ids,
 			MakeUrl: UrlMaker{base}.MakeUrl,
 			Store:   s.store,
 			Tmpl:    s.templates,
+			blinks:  blinks,
 		})
 	}
 
