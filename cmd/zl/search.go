@@ -57,7 +57,7 @@ func makeCmdSearch(st zettel.Storage) *cli.Command {
 
 			if strutil.ContainsFold(zet.Readme().String(), plain.String()) {
 				matches++
-				fmt.Println(zet)
+				fmt.Println(printZet(zet))
 			}
 		}
 
