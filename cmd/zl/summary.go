@@ -8,8 +8,8 @@ import (
 	"github.com/go-clix/cli"
 	"gonum.org/v1/gonum/graph/community"
 	"jensch.works/zl/pkg/zettel"
+	"jensch.works/zl/pkg/zettel/elemz"
 	zlg "jensch.works/zl/pkg/zettel/graph"
-	"jensch.works/zl/pkg/zettel/scan"
 )
 
 func makeCmdSummary(st zettel.Storage) *cli.Command {
@@ -25,7 +25,7 @@ func makeCmdSummary(st zettel.Storage) *cli.Command {
 
 		rels := make(map[string][2]int)
 
-		g, idmap, errs := zlg.Make(st)
+		g, idmap, errs := zlg.MakeG(st)
 		for _, err := range errs {
 			log.Println(err)
 		}
@@ -49,7 +49,7 @@ func makeCmdSummary(st zettel.Storage) *cli.Command {
 		iter := st.Iter()
 		for iter.Next() {
 			txt := iter.Zet().Readme().Text
-			boxes := scan.All(txt)
+			boxes := elemz.Refboxes(txt)
 			for _, box := range boxes {
 				x := rels[box.Rel]
 				x[0]++

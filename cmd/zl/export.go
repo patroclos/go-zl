@@ -9,7 +9,7 @@ import (
 	"github.com/go-git/go-billy/v5/osfs"
 	"jensch.works/zl/pkg/visibility"
 	"jensch.works/zl/pkg/zettel"
-	"jensch.works/zl/pkg/zettel/scan"
+	"jensch.works/zl/pkg/zettel/elemz"
 )
 
 func makeCmdExport(st zettel.Storage) *cli.Command {
@@ -26,7 +26,7 @@ func makeCmdExport(st zettel.Storage) *cli.Command {
 
 		target := osfs.New(args[0])
 
-		scn := scan.ListScanner(st)
+		scn := elemz.ListScanner(st)
 
 		for zet := range scn.Scan(os.Stdin) {
 			if err := target.MkdirAll(zet.Id(), 0700); err != nil {

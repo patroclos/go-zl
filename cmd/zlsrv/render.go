@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"jensch.works/zl/pkg/zettel"
-	"jensch.works/zl/pkg/zettel/scan"
+	"jensch.works/zl/pkg/zettel/elemz"
 )
 
 type ZetRenderer struct {
@@ -30,7 +30,15 @@ type BoxRefData struct {
 	Url    string
 	Text   string
 	InFeed bool
+	Type   RefType
 }
+
+type RefType string
+
+const (
+	RefZ   = "zettel"
+	RefUri = "uri"
+)
 
 func (c ZetRenderer) pos() int {
 	for i, id := range c.Feed {
@@ -70,7 +78,7 @@ func (c *ZetRenderer) Rendered() (html template.HTML) {
 	c.sb.WriteString(fmt.Sprintf("<h2>%s</h2>\n", template.HTMLEscapeString(c.Z.Readme().Title)))
 
 	text := c.Z.Readme().Text
-	boxes := scan.All(text)
+	boxes := elemz.Refboxes(text)
 	blinks := c.backlinks()
 	if len(blinks.Refs) > 0 {
 		boxes = append(boxes, c.backlinks())
@@ -78,11 +86,12 @@ func (c *ZetRenderer) Rendered() (html template.HTML) {
 	pos := 0
 
 	for _, box := range boxes {
-		if box.Start > pos {
-			c.pre(text[pos:box.Start])
+		span := box.Span()
+		if span.Start > pos {
+			c.pre(text[pos:span.Start])
 		}
 		c.refbox(box)
-		pos = box.End
+		pos = span.End
 	}
 
 	if pos < len(text)-1 {
@@ -97,19 +106,18 @@ func (c *ZetRenderer) pre(txt string) {
 	c.sb.WriteString(fmt.Sprintf("<pre>%s</pre>\n", template.HTMLEscapeString(txt)))
 }
 
-func (c ZetRenderer) backlinks() scan.Refbox {
+func (c ZetRenderer) backlinks() elemz.Refbox {
 	refs := c.blinks.To(c.Z.Id())
 
 	l := len(c.Z.Readme().Text)
-	return scan.Refbox{
-		Rel:   "Backlinks",
-		Refs:  refs,
-		Start: l,
-		End:   l,
+	return elemz.Refbox{
+		Rel:     "Backlinks",
+		Refs:    refs,
+		BoxSpan: elemz.Span{Start: l, End: l},
 	}
 }
 
-func (c *ZetRenderer) refbox(rb scan.Refbox) {
+func (c *ZetRenderer) refbox(rb elemz.Refbox) {
 	data := BoxData{
 		Rel:  rb.Rel,
 		Refs: make([]BoxRefData, 0, len(rb.Refs)),
@@ -117,7 +125,12 @@ func (c *ZetRenderer) refbox(rb scan.Refbox) {
 	for _, rel := range rb.Refs {
 		if strings.HasPrefix(rel, "<") && strings.HasSuffix(rel, ">") {
 			rel = rel[1 : len(rel)-1]
-			data.Refs = append(data.Refs, BoxRefData{rel, rel, false})
+			data.Refs = append(data.Refs, BoxRefData{
+				Url:    rel,
+				Text:   rel,
+				InFeed: false,
+				Type:   RefUri,
+			})
 			continue
 		}
 
@@ -134,7 +147,12 @@ func (c *ZetRenderer) refbox(rb scan.Refbox) {
 				break
 			}
 		}
-		data.Refs = append(data.Refs, BoxRefData{url, refZet.Readme().Title, hasZet})
+		data.Refs = append(data.Refs, BoxRefData{
+			Url:    url,
+			Text:   refZet.Readme().Title,
+			InFeed: hasZet,
+			Type:   RefZ,
+		})
 	}
 	if len(data.Refs) == 0 {
 		return
@@ -143,6 +161,17 @@ func (c *ZetRenderer) refbox(rb scan.Refbox) {
 }
 
 func (c *ZetRenderer) urlTo(id string) string {
+	pos := -1
+	for i, e := range c.Feed {
+		if e == c.Z.Id() {
+			pos = i
+			break
+		}
+	}
+	if pos == -1 {
+		panic("render error: rendered zet not in feed")
+	}
+
 	has := false
 	for _, entry := range c.Feed {
 		if entry == id {
@@ -156,10 +185,15 @@ func (c *ZetRenderer) urlTo(id string) string {
 	}
 
 	newFeed := make([]string, len(c.Feed)+1)
-	for i := range c.Feed {
-		newFeed[i] = c.Feed[i]
+	for i := range newFeed {
+		if i <= pos {
+			newFeed[i] = c.Feed[i]
+		} else if i == pos+1 {
+			newFeed[i] = id
+		} else {
+			newFeed[i] = c.Feed[i-1]
+		}
 	}
-	newFeed[len(c.Feed)] = id
 
 	return c.MakeUrl(newFeed, &id).String()
 }

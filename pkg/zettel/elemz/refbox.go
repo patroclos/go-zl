@@ -1,8 +1,10 @@
-package scan
+package elemz
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
+	"io"
 	"regexp"
 	"strings"
 )
@@ -13,11 +15,63 @@ const (
 
 var regex = regexp.MustCompile(fmt.Sprintf(`(?m)^([a-zA-Z\[][^:\n]*):\n((?:%s)(?:\n%s)*)(\n\+ .*$(?:\n  .*$)*)?`, refLine, refLine))
 
+type refboxParser struct {
+}
+
+func (p *refboxParser) Parse(ctx ParseCtx) (e Elem, adv int, err error) {
+	scn := bufio.NewScanner(bytes.NewReader(ctx.Buf[ctx.Pos:]))
+	if !scn.Scan() {
+		return nil, 0, io.EOF
+	}
+	rel := scn.Text()
+	if !strings.HasSuffix(rel, ":") {
+		return nil, 0, nil
+	}
+
+	refs := []string{}
+	extra := []string{}
+	adv = ctx.Pos + len(rel) + 1
+	for scn.Scan() {
+		if len(scn.Text()) == 0 {
+			break
+		}
+		adv += len(scn.Bytes()) + 1
+
+		switch scn.Text()[0] {
+		case '*':
+			refs = append(refs, scn.Text())
+		case '+':
+			extra = append(extra, scn.Text())
+		}
+	}
+
+	for i, ref := range refs {
+		ref = strings.TrimPrefix(ref, "* ")
+		refs[i] = ref
+		if strings.Index(ref, "  ") == -1 {
+			if len(strings.Split(ref, "  ")) != 11 {
+				return nil, 0, fmt.Errorf("invalid ref: %q", ref)
+			}
+		}
+	}
+
+	return &Refbox{
+		Rel:     rel,
+		Refs:    refs,
+		Extra:   extra,
+		BoxSpan: Span{ctx.Pos, ctx.Pos + len(rel) + adv},
+	}, adv, nil
+}
+
 type Refbox struct {
-	Rel        string
-	Refs       []string
-	Extra      []string
-	Start, End int
+	Rel     string
+	Refs    []string
+	Extra   []string
+	BoxSpan Span
+}
+
+func (e *Refbox) Span() Span {
+	return e.BoxSpan
 }
 
 func (r Refbox) String() string {
@@ -41,14 +95,14 @@ func (r Refbox) String() string {
 	return b.String()
 }
 
-func All(txt string) []Refbox {
+func Refboxes(txt string) []Refbox {
 	matches := regex.FindAllStringSubmatchIndex(txt, -1)
 
 	boxes := make([]Refbox, len(matches))
 
 	for i, match := range matches {
 		b := &boxes[i]
-		b.Start, b.End = match[0], match[1]
+		b.BoxSpan.Start, b.BoxSpan.End = match[0], match[1]
 		b.Rel = txt[match[2]:match[3]]
 
 		b.Refs = make([]string, 0, 8)

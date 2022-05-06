@@ -8,7 +8,8 @@ import (
 	"github.com/go-clix/cli"
 	"jensch.works/zl/pkg/zettel"
 	"jensch.works/zl/pkg/zettel/crawl"
-	"jensch.works/zl/pkg/zettel/scan"
+	"jensch.works/zl/pkg/zettel/elemz"
+	"jensch.works/zl/pkg/zettel/graph"
 )
 
 type depthCrawler struct {
@@ -19,7 +20,16 @@ func (spec depthCrawler) Crawl(c crawl.Node) crawl.RecurseMask {
 	if spec.max > 0 && len(c.Path) > spec.max {
 		return crawl.None
 	}
-	fmt.Println(printZet(c.Z))
+	switch c.Reason.Refbox {
+	case nil:
+		fmt.Println(printZet(c.N.Z))
+	default:
+		rel := c.Reason.Refbox.Rel
+		if strings.Contains(rel, " ") {
+			rel = fmt.Sprintf("%#v", rel)
+		}
+		fmt.Print(zettel.MustFmt(c.N.Z, fmt.Sprintf("{{.Id}}  {{.Title}} parent:%s/refbox[%s]\n", c.Path[0].N.Z.Id(), c.Reason.Refbox.Rel)))
+	}
 	return crawl.All
 }
 
@@ -29,7 +39,11 @@ func makeCmdCrawl(store zettel.Storage) *cli.Command {
 
 	depth := cmd.Flags().IntP("depth", "d", 0, "max-depth to traverse to")
 	cmd.Run = func(cmd *cli.Command, args []string) error {
-		crawler := crawl.New(store, depthCrawler{max: *depth}.Crawl)
+		g, err := graph.Make(store)
+		if err != nil {
+			return err
+		}
+		crawler := crawl.New(g, depthCrawler{max: *depth}.Crawl)
 		if isTerminal(os.Stdin) {
 			zets, err := store.Resolve(strings.Join(args, " "))
 			if err != nil {
@@ -44,7 +58,7 @@ func makeCmdCrawl(store zettel.Storage) *cli.Command {
 			return nil
 		}
 
-		scn := scan.ListScanner(store)
+		scn := elemz.ListScanner(store)
 		zets := make([]zettel.Z, 0, 16)
 		for zet := range scn.Scan(os.Stdin) {
 			zets = append(zets, zet)

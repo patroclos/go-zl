@@ -1,27 +1,24 @@
 package crawl
 
 import (
-	"log"
+	"fmt"
 	"strings"
 	"sync"
 
 	"jensch.works/zl/pkg/zettel"
-	"jensch.works/zl/pkg/zettel/scan"
+	"jensch.works/zl/pkg/zettel/elemz"
+	"jensch.works/zl/pkg/zettel/graph"
 )
 
 type RecurseMask int
 
 const (
 	None RecurseMask = 0
-	Link             = LinkA | LinkB | LinkContext
-	All              = Inbound | Outbound | Link
+	All              = Inbound | Outbound
 )
 const (
 	Inbound RecurseMask = 1 << iota
 	Outbound
-	LinkA
-	LinkB
-	LinkContext
 )
 
 func (m RecurseMask) Has(mask RecurseMask) bool {
@@ -36,16 +33,10 @@ func (m RecurseMask) String() string {
 		return "In"
 	case Outbound:
 		return "Out"
-	case LinkA:
-		return "Link.A"
-	case LinkB:
-		return "Link.B"
-	case LinkContext:
-		return "Link.Ctx"
 	}
 
 	var parts []string
-	for k := Inbound; k < LinkContext; k <<= 1 {
+	for k := Inbound; k < Outbound; k <<= 1 {
 		if m&k != 0 {
 			parts = append(parts, k.String())
 		}
@@ -55,9 +46,14 @@ func (m RecurseMask) String() string {
 }
 
 type Node struct {
-	Z      zettel.Z
+	N      *graph.Node
 	Path   []*Node
-	Reason RecurseMask
+	Reason Reason
+}
+
+type Reason struct {
+	Mask   RecurseMask
+	Refbox *elemz.Refbox
 }
 
 type CrawlFn func(Node) RecurseMask
@@ -66,19 +62,19 @@ type Crawler interface {
 	Crawl(...zettel.Z)
 }
 
-type crawlData struct {
-	st zettel.ZettelerIter
-	f  CrawlFn
+type crawler struct {
+	g graph.ZGraph
+	f CrawlFn
 }
 
-func New(st zettel.ZettelerIter, f CrawlFn) Crawler {
-	return crawlData{st: st, f: f}
+func New(g graph.ZGraph, f CrawlFn) Crawler {
+	return crawler{g, f}
 }
 
-func (b crawlData) Crawl(zets ...zettel.Z) {
+func (b crawler) Crawl(zets ...zettel.Z) {
 	cr := &crawl{
-		store:   b.st,
-		m:       make(map[string]struct{}),
+		g:       b.g,
+		m:       make(map[int64]struct{}),
 		rw:      new(sync.RWMutex),
 		wg:      new(sync.WaitGroup),
 		root:    zets,
@@ -90,8 +86,8 @@ func (b crawlData) Crawl(zets ...zettel.Z) {
 type crawl struct {
 	root    []zettel.Z
 	crawler CrawlFn
-	store   zettel.ZettelerIter
-	m       map[string]struct{}
+	g       graph.ZGraph
+	m       map[int64]struct{}
 	rw      *sync.RWMutex
 	wg      *sync.WaitGroup
 	errs    []error
@@ -101,22 +97,24 @@ func (c *crawl) Run() {
 	c.errs = make([]error, 0, 8)
 	c.wg.Add(len(c.root))
 	for i := range c.root {
-		go c.do(Node{Z: c.root[i]})
+		go c.do(Node{
+			N:      &graph.Node{Z: c.root[i]},
+			Path:   []*Node{},
+			Reason: Reason{},
+		})
 	}
 	c.wg.Wait()
 }
 
-func (c *crawl) doId(id string, from Node, reason RecurseMask) {
+func (c *crawl) doId(id int64, from Node, reason RecurseMask) {
 	c.rw.Lock()
 	if _, ok := c.m[id]; ok {
 		c.rw.Unlock()
 		return
 	}
-	c.rw.Unlock()
-	zet, err := c.store.Zettel(id)
-	if err != nil {
-		c.errs = append(c.errs, err)
-		log.Println(err)
+	no := c.g.Node(id)
+	if no == nil {
+		c.errs = append(c.errs, fmt.Errorf("node doesnt exist %q", id))
 		return
 	}
 
@@ -126,82 +124,46 @@ func (c *crawl) doId(id string, from Node, reason RecurseMask) {
 		pth[i] = from.Path[i]
 	}
 	c.wg.Add(1)
-	go c.do(Node{Z: zet, Path: pth, Reason: reason})
+	go c.do(Node{N: no, Path: pth, Reason: Reason{reason, c.g.G().EdgeRefbox(from.N.ID(), id)}})
 }
 
 func (c *crawl) do(cra Node) {
 	defer c.wg.Done()
 	c.rw.Lock()
-	if _, ok := c.m[cra.Z.Id()]; ok {
+	id := cra.N.ID()
+	if _, ok := c.m[id]; ok {
 		c.rw.Unlock()
 		return
 	}
-	c.m[cra.Z.Id()] = struct{}{}
+	c.m[id] = struct{}{}
 	c.rw.Unlock()
 
 	mask := c.crawler(cra)
 
 	if mask.Has(Inbound) {
-		c.wg.Add(1)
-		go func() {
-			defer c.wg.Done()
-			for iter := c.store.Iter(); iter.Next(); {
-				boxes := scan.All(iter.Zet().Readme().Text)
-				for _, box := range boxes {
-					for _, ref := range box.Refs {
-						zet, err := c.store.Zettel(ref[:11])
-						if err != nil {
-							continue
-						}
-						if zet.Id() == cra.Z.Id() {
-							pth := make([]*Node, len(cra.Path)+1)
-							pth[len(cra.Path)] = &cra
-							for i := range cra.Path {
-								pth[i] = cra.Path[i]
-							}
-							c.wg.Add(1)
-							go c.do(Node{Z: iter.Zet(), Path: pth, Reason: Inbound})
-						}
-					}
-				}
+		inbound := c.g.G().To(id)
+		for inbound.Next() {
+			pth := make([]*Node, len(cra.Path)+1)
+			pth[len(cra.Path)] = &cra
+			for i := range cra.Path {
+				pth[i] = cra.Path[i]
 			}
-		}()
+			c.wg.Add(1)
+			n := inbound.Node().(graph.Node)
+			go c.do(Node{N: &n, Path: pth, Reason: Reason{Inbound, c.g.G().EdgeRefbox(inbound.Node().ID(), id)}})
+		}
 	}
 
 	if mask.Has(Outbound) {
-		c.wg.Add(1)
-		go func() {
-			defer c.wg.Done()
-			boxes := scan.All(cra.Z.Readme().Text)
-			for _, box := range boxes {
-				for _, ref := range box.Refs {
-					zet, err := c.store.Zettel(ref[:11])
-					if err != nil {
-						continue
-					}
-					pth := make([]*Node, len(cra.Path)+1)
-					pth[len(cra.Path)] = &cra
-					for i := range cra.Path {
-						pth[i] = cra.Path[i]
-					}
-					c.wg.Add(1)
-					go c.do(Node{Z: zet, Path: pth, Reason: Outbound})
-				}
+		outbound := c.g.G().From(id)
+		for outbound.Next() {
+			c.wg.Add(1)
+			pth := make([]*Node, len(cra.Path)+1)
+			pth[len(cra.Path)] = &cra
+			for i := range cra.Path {
+				pth[i] = cra.Path[i]
 			}
-		}()
-	}
-
-	if lnk := cra.Z.Metadata().Link; mask&Link != None && lnk != nil {
-		if mask.Has(LinkA) {
-			c.doId(lnk.A, cra, LinkA)
-		}
-		if mask.Has(LinkB) {
-			c.doId(lnk.B, cra, LinkB)
-		}
-		if mask.Has(LinkContext) {
-			for i := range lnk.Ctx {
-				c.doId(lnk.Ctx[i], cra, LinkContext)
-			}
+			go c.do(Node{N: c.g.Node(id), Path: pth, Reason: Reason{Outbound, c.g.G().EdgeRefbox(id, outbound.Node().ID())}})
 		}
 	}
 }

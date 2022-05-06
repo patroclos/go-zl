@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-clix/cli"
 	"jensch.works/zl/pkg/zettel"
-	"jensch.works/zl/pkg/zettel/crawl"
+	"jensch.works/zl/pkg/zettel/graph"
 )
 
 func makeCmdRemove(st zettel.Storage) *cli.Command {
@@ -31,14 +31,16 @@ func makeCmdRemove(st zettel.Storage) *cli.Command {
 			return st.Remove(zet)
 		}
 
+		g, err := graph.Make(st)
+		if err != nil {
+			return err
+		}
+
 		backlinks := make([]zettel.Z, 0, 8)
-		crawl.New(st, func(n crawl.Node) crawl.RecurseMask {
-			if len(n.Path) == 0 {
-				return crawl.Inbound
-			}
-			backlinks = append(backlinks, n.Z)
-			return crawl.None
-		}).Crawl(zet)
+		to := g.G().To(graph.Node{Z: zet}.ID())
+		for to.Next() {
+			backlinks = append(backlinks, g.Node(to.Node().ID()).Z)
+		}
 
 		listing := zettel.MustFmt(zet, zettel.ListingFormat)
 		fmt.Fprintln(os.Stderr, listing)

@@ -1,4 +1,4 @@
-package scan
+package elemz
 
 import (
 	"bufio"
@@ -25,7 +25,7 @@ func ListScanner(z Zettler) Scanner {
 
 func (p listScanner) Scan(r io.Reader) <-chan zettel.Z {
 	c := make(chan zettel.Z)
-	go scan(c, p.z, r)
+	go _scan(c, p.z, r)
 	return c
 }
 
@@ -33,7 +33,7 @@ type Zettler interface {
 	Zettel(id string) (zettel.Z, error)
 }
 
-func scan(c chan<- zettel.Z, st Zettler, r io.Reader) {
+func _scan(c chan<- zettel.Z, st Zettler, r io.Reader) {
 	defer close(c)
 	scn := bufio.NewScanner(r)
 	reg := regexp.MustCompile(`\[.+\]\((.+)\)`)

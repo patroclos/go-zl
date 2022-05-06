@@ -7,7 +7,7 @@ import (
 
 func TaintView(inner crawl.CrawlFn, tolerate []string) crawl.CrawlFn {
 	return func(n crawl.Node) crawl.RecurseMask {
-		if !Visible(n.Z, tolerate) {
+		if !Visible(n.N.Z, tolerate) {
 			return crawl.None
 		}
 		return inner(n)

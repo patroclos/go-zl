@@ -7,6 +7,7 @@ import (
 	"github.com/go-clix/cli"
 	"jensch.works/zl/pkg/zettel"
 	"jensch.works/zl/pkg/zettel/crawl"
+	"jensch.works/zl/pkg/zettel/graph"
 )
 
 func makeCmdBacklinks(st zettel.Storage) *cli.Command {
@@ -23,11 +24,15 @@ func makeCmdBacklinks(st zettel.Storage) *cli.Command {
 			return err
 		}
 
-		crawl.New(st, func(n crawl.Node) crawl.RecurseMask {
+		g, err := graph.Make(st)
+		if err != nil {
+			return err
+		}
+		crawl.New(g, func(n crawl.Node) crawl.RecurseMask {
 			if len(n.Path) == 0 {
 				return crawl.Inbound
 			}
-			fmt.Println(n.Z)
+			fmt.Printf("%s  rel:%#v\n", n.N.Z, n.Reason.Refbox.Rel)
 			return crawl.None
 		}).Crawl(zl)
 

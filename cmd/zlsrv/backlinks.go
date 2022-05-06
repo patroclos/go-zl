@@ -1,12 +1,13 @@
 package main
 
 import (
-	"strings"
+	"fmt"
+	"log"
 	"sync"
 	"time"
 
 	"jensch.works/zl/pkg/zettel"
-	"jensch.works/zl/pkg/zettel/scan"
+	"jensch.works/zl/pkg/zettel/graph"
 )
 
 type Backlinks struct {
@@ -37,18 +38,16 @@ func (b *Backlinks) refresh() {
 	b.links = make(map[string]map[string]struct{})
 	b.t = time.Now()
 
-	iter := b.s.Iter()
-	for iter.Next() {
-		boxes := scan.All(iter.Zet().Readme().Text)
-		for _, box := range boxes {
-			for _, ref := range box.Refs {
-				z, err := b.s.Zettel(strings.Fields(ref)[0])
-				if err != nil {
-					continue
-				}
+	zg, err := graph.Make(b.s)
+	if err != nil {
+		log.Println(fmt.Errorf("error refreshing graph: %w", err))
+		return
+	}
 
-				b.store(iter.Zet().Id(), z.Id())
-			}
+	for id := range zg.Nodes() {
+		from := zg.G().From(id)
+		for from.Next() {
+			b.store(zg.Node(id).Z.Id(), zg.Node(from.Node().ID()).Z.Id())
 		}
 	}
 }

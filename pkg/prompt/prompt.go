@@ -5,6 +5,8 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+
+	"jensch.works/zl/pkg/zettel/elemz"
 )
 
 // The prompt package contains everything related to Q.A. prompts and omissables
@@ -12,9 +14,12 @@ import (
 // properly embedded prompts.
 
 type QAPrompt struct {
-	Q string
-	A string
+	Q    string
+	A    string
+	span elemz.Span
 }
+
+func (p *QAPrompt) Span() elemz.Span { return p.span }
 
 func (p QAPrompt) String() string {
 	return fmt.Sprintf("Q.  %s\nA.  %s", p.Q, p.A)
@@ -49,6 +54,10 @@ type Stringer interface {
 
 type EmbeddedPrompt interface {
 	Stringer
+}
+
+func Parser() elemz.Parser {
+	return elemz.NewCompoundParser(&parseQA{})
 }
 
 func ExtractAll(txt string) []EmbeddedPrompt {

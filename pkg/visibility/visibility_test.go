@@ -8,6 +8,7 @@ import (
 	"jensch.works/zl/pkg/storage"
 	"jensch.works/zl/pkg/zettel"
 	"jensch.works/zl/pkg/zettel/crawl"
+	"jensch.works/zl/pkg/zettel/graph"
 )
 
 func TestTaintView(t *testing.T) {
@@ -29,15 +30,20 @@ func TestTaintView(t *testing.T) {
 	st.Put(a)
 	st.Put(b)
 
+	g, err := graph.Make(st)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	visited := make([]zettel.Z, 0)
 	inner := func(n crawl.Node) crawl.RecurseMask {
-		visited = append(visited, n.Z)
-		t.Log("visit", n.Z)
+		visited = append(visited, n.N.Z)
+		t.Log("visit", n.N.Z)
 		return crawl.All
 	}
 	taintView := TaintView(inner, []string{"sensitive"})
 
-	crawl.New(st, taintView).Crawl(a)
+	crawl.New(g, taintView).Crawl(a)
 
 	if len(visited) != 2 {
 		t.Errorf("expected 2 hits, got %d", len(visited))
@@ -45,12 +51,12 @@ func TestTaintView(t *testing.T) {
 
 	visited = make([]zettel.Z, 0)
 	inner = func(n crawl.Node) crawl.RecurseMask {
-		visited = append(visited, n.Z)
+		visited = append(visited, n.N.Z)
 		return crawl.All
 	}
 	taintView = TaintView(inner, nil)
 
-	crawl.New(st, taintView).Crawl(a)
+	crawl.New(g, taintView).Crawl(a)
 
 	if len(visited) != 1 {
 		t.Errorf("expected 1 result, got %d", len(visited))

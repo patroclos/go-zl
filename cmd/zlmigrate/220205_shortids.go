@@ -10,7 +10,7 @@ import (
 	"github.com/go-git/go-billy/v5/osfs"
 	"jensch.works/zl/pkg/storage"
 	"jensch.works/zl/pkg/zettel"
-	"jensch.works/zl/pkg/zettel/scan"
+	"jensch.works/zl/pkg/zettel/elemz"
 )
 
 func makeCmdShortIds() *cli.Command {
@@ -31,7 +31,7 @@ func makeCmdShortIds() *cli.Command {
 		counterparts := make(map[string]zettel.Z)
 		olds := make([]string, 0, 1024)
 
-		scn := scan.ListScanner(src)
+		scn := elemz.ListScanner(src)
 
 		for iter := src.Iter(); iter.Next(); {
 			zet := iter.Zet()

@@ -41,6 +41,7 @@ func main() {
 	root.AddCommand(makeCmdLabel(store))
 	root.AddCommand(makeCmdTldr(store))
 	root.AddCommand(makeCmdSummary(store))
+	root.AddCommand(makeCmdPlace(store))
 
 	if err := root.Execute(); err != nil {
 		log.Fatal(err)

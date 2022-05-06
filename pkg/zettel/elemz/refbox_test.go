@@ -1,4 +1,4 @@
-package scan
+package elemz
 
 import (
 	"testing"
@@ -30,15 +30,15 @@ func TestRefboxAll(t *testing.T) {
 + Freeform extra text
   Of course with multiline support 🤯`
 
-	boxes := All(txt)
+	boxes := Refboxes(txt)
 
 	if len(boxes) != 1 {
 		t.Fatalf("expected to find 1 Refbox, got %d", len(boxes))
 	}
 
 	b := boxes[0]
-	if b.Start != 0 || b.End != len(txt) {
-		t.Errorf("expected start,end to be 0,%d, got %d,%d", len(txt), b.Start, b.End)
+	if b.BoxSpan.Start != 0 || b.BoxSpan.End != len(txt) {
+		t.Errorf("expected start,end to be 0,%d, got %d,%d", len(txt), b.BoxSpan.Start, b.BoxSpan.End)
 	}
 
 	if len(b.Refs) != 2 {
@@ -68,7 +68,7 @@ func TestRefboxAll(t *testing.T) {
 
 func TestRefboxNoTrailingNewline(t *testing.T) {
 	txt := "Refs:\n* 220101-blub  TITLE"
-	all := All(txt)
+	all := Refboxes(txt)
 	if l := len(all); l != 1 {
 		t.Errorf("expected to parse 1 refbox from %q, got %d", txt, l)
 	}
@@ -76,7 +76,7 @@ func TestRefboxNoTrailingNewline(t *testing.T) {
 
 func TestRefboxUri(t *testing.T) {
 	txt := "Refs:\n* <https://jensch.dev>"
-	all := All(txt)
+	all := Refboxes(txt)
 	if l := len(all); l != 1 {
 		t.Errorf("expected %q to contain a refbox, got %d", txt, l)
 	}

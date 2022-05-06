@@ -2,15 +2,16 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"os"
 	"strings"
 
 	"github.com/go-clix/cli"
+	"jensch.works/zl/cmd/zl/view"
 	"jensch.works/zl/pkg/visibility"
 	"jensch.works/zl/pkg/zettel"
 	"jensch.works/zl/pkg/zettel/crawl"
+	"jensch.works/zl/pkg/zettel/graph"
 )
 
 func makeCmdList(st zettel.Storage) *cli.Command {
@@ -18,22 +19,40 @@ func makeCmdList(st zettel.Storage) *cli.Command {
 	cmd.Use = "list"
 	cmd.Aliases = []string{"ls"}
 	all := cmd.Flags().BoolP("all", "a", false, "disable taint filtering")
+	format := cmd.Flags().StringP("format", "f", "listing", "listing zettel format")
 	cmd.Run = func(cmd *cli.Command, args []string) error {
-		isTerm := isTerminal(os.Stdin)
+		termInput := isTerminal(os.Stdin)
 
+		g, err := graph.Make(st)
+		if err != nil {
+			return err
+		}
+
+		i := 0
 		printZ := func(n crawl.Node) crawl.RecurseMask {
-			fmt.Println(printZet(n.Z))
+			i++
+			v := &view.Listing{
+				Zets:  []zettel.Z{n.N.Z},
+				Fmt:   *format,
+				Dest:  os.Stdout,
+				Color: true,
+			}
+			err := v.Render()
+			if err != nil {
+				// fmt.Fprintf(os.Stderr, "error listing %s: %v", n.N.Z.Id(), err)
+				panic(*format)
+			}
 			return crawl.None
 		}
 		view := visibility.TaintView(printZ, strings.Split(os.Getenv(`ZL_TOLERATE`), ","))
 
 		var c crawl.Crawler
 		if *all {
-			c = crawl.New(st, printZ)
+			c = crawl.New(g, printZ)
 		} else {
-			c = crawl.New(st, view)
+			c = crawl.New(g, view)
 		}
-		if isTerm {
+		if termInput {
 			for iter := st.Iter(); iter.Next(); {
 				c.Crawl(iter.Zet())
 			}

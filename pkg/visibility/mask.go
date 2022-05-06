@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"jensch.works/zl/pkg/zettel"
-	"jensch.works/zl/pkg/zettel/scan"
+	"jensch.works/zl/pkg/zettel/elemz"
 )
 
 type MaskView struct {
@@ -17,7 +17,7 @@ func (v MaskView) Mask(z zettel.Z) (zettel.Z, error) {
 		var str strings.Builder
 
 		txt := z.Readme().Text
-		boxes := scan.All(txt)
+		boxes := elemz.Refboxes(txt)
 
 		pos := 0
 
@@ -33,11 +33,12 @@ func (v MaskView) Mask(z zettel.Z) (zettel.Z, error) {
 				}
 			}
 
-			if pos < box.Start {
-				str.WriteString(txt[pos:box.Start])
+			span := box.Span()
+			if pos < span.Start {
+				str.WriteString(txt[pos:span.Start])
 			}
 			str.WriteString(box.String())
-			pos = box.End
+			pos = span.End
 
 		}
 		if pos < len(txt) {

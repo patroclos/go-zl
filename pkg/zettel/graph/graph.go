@@ -6,7 +6,7 @@ import (
 	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/simple"
 	"jensch.works/zl/pkg/zettel"
-	"jensch.works/zl/pkg/zettel/scan"
+	"jensch.works/zl/pkg/zettel/elemz"
 )
 
 // https://pkg.go.dev/gonum.org/v1/gonum/graph?utm_source=godoc#Graph
@@ -19,21 +19,46 @@ func (n Node) ID() int64 {
 	return int64(n.Z.Metadata().CreateTime.Nanosecond())
 }
 
-func Make(store zettel.ZettelerIter) (graph.Directed, map[int64]zettel.Z, []error) {
+type G struct {
+	graph.Directed
+	boxes map[int64]map[int64]elemz.Refbox
+}
+
+func (g *G) EdgeRefbox(from, to int64) *elemz.Refbox {
+	if !g.HasEdgeFromTo(from, to) {
+		return nil
+	}
+	boxes, ok := g.boxes[from]
+	if !ok {
+		return nil
+	}
+	box, ok := boxes[to]
+	if !ok {
+		return nil
+	}
+	return &box
+}
+
+func MakeG(store zettel.ZettelerIter) (*G, map[int64]zettel.Z, []error) {
 	var errs []error
 
 	sg := simple.NewDirectedGraph()
 	idmap := make(map[int64]zettel.Z)
 
+	boxmap := map[int64]map[int64]elemz.Refbox{}
 	iter := store.Iter()
 	for iter.Next() {
-		n, isNew := sg.NodeWithID(Node{iter.Zet()}.ID())
-		if isNew {
+		n := Node{iter.Zet()}
+		if _, ok := idmap[n.ID()]; !ok {
 			sg.AddNode(n)
-			idmap[n.ID()] = iter.Zet()
+			idmap[n.ID()] = n.Z
 		}
 
-		boxes := scan.All(iter.Zet().Readme().Text)
+		bm := boxmap[n.ID()]
+		if bm == nil {
+			bm = make(map[int64]elemz.Refbox)
+		}
+		boxes := elemz.Refboxes(iter.Zet().Readme().Text)
 		for _, box := range boxes {
 			for _, ref := range box.Refs {
 				id := strings.Fields(ref)[0]
@@ -46,19 +71,21 @@ func Make(store zettel.ZettelerIter) (graph.Directed, map[int64]zettel.Z, []erro
 					continue
 				}
 
-				n2, isNew := sg.NodeWithID(Node{zet}.ID())
-				if n == n2 {
+				n2 := Node{zet}
+				if n.ID() == n2.ID() {
 					continue
 				}
-				if isNew {
+				if _, ok := idmap[n2.ID()]; !ok {
 					sg.AddNode(n2)
 					idmap[n2.ID()] = zet
 				}
+				bm[n2.ID()] = box
 
 				sg.SetEdge(sg.NewEdge(n, n2))
 			}
 		}
+		boxmap[n.ID()] = bm
 	}
 
-	return sg, idmap, errs
+	return &G{sg, boxmap}, idmap, errs
 }
