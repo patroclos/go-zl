@@ -3,20 +3,26 @@ package main
 import (
 	"fmt"
 	"html/template"
+	"log"
 	"net/url"
+	"os"
+	"os/exec"
 	"strings"
 
+	"jensch.works/zl/pkg/zconf"
 	"jensch.works/zl/pkg/zettel"
 	"jensch.works/zl/pkg/zettel/elemz"
+	"jensch.works/zl/pkg/zettel/graph"
 )
 
 type ZetRenderer struct {
 	Z       zettel.Z
+	G       *graph.Graph
+	Cfg     *zconf.Cfg
 	Feed    []string
 	MakeUrl func([]string, *string) *url.URL
 	Store   zettel.ZettelerIter
 	Tmpl    *template.Template
-	blinks  *Backlinks
 	sb      strings.Builder
 }
 
@@ -29,6 +35,7 @@ type BoxData struct {
 type BoxRefData struct {
 	Url    string
 	Text   string
+	Rel    string
 	InFeed bool
 	Type   RefType
 }
@@ -77,25 +84,46 @@ func (c *ZetRenderer) Rendered() (html template.HTML) {
 
 	c.sb.WriteString(fmt.Sprintf("<h2>%s</h2>\n", template.HTMLEscapeString(c.Z.Readme().Title)))
 
-	text := c.Z.Readme().Text
-	boxes := elemz.Refboxes(text)
-	blinks := c.backlinks()
+	elems, err := elemz.Read(c.Z.Readme().Text)
+	if err != nil {
+		log.Println("failed reading zet elems", c.Z.Id(), err)
+		return
+	}
+	blinks := c.newBlinksBox()
 	if len(blinks.Refs) > 0 {
-		boxes = append(boxes, c.backlinks())
+		elems = append(elems, blinks)
 	}
-	pos := 0
 
-	for _, box := range boxes {
-		span := box.Span()
-		if span.Start > pos {
-			c.pre(text[pos:span.Start])
+	for _, el := range elems {
+		switch elem := el.(type) {
+		case *elemz.Refbox:
+			c.refbox(*elem)
+		case *elemz.Code:
+			if c.Cfg.Elems != nil && c.Cfg.Elems.Code != nil {
+				flt, ok := c.Cfg.Elems.Code.Filters[elem.BlockParam]
+				if !ok {
+					goto plain
+				}
+
+				cmd := exec.Command("/bin/bash", flt.Cmd)
+				cmd.Stdin = strings.NewReader(elem.Code)
+				cmd.Stderr = os.Stderr
+				buf, err := cmd.Output()
+				if err != nil {
+					log.Printf("filter error: %v", err)
+					goto plain
+				}
+				_, err = c.sb.Write(buf)
+				if err != nil {
+					log.Printf("error writing filter-output: %v\nOutput: %#v", err, string(buf))
+				}
+				continue
+			}
+		plain:
+			c.sb.WriteString(fmt.Sprintf("<pre><code>%s</code></pre>", template.HTMLEscapeString(elem.Code)))
+		default:
+			c.pre(elem.String())
 		}
-		c.refbox(box)
-		pos = span.End
-	}
-
-	if pos < len(text)-1 {
-		c.pre(text[pos:])
 	}
 
 	return
@@ -106,11 +134,15 @@ func (c *ZetRenderer) pre(txt string) {
 	c.sb.WriteString(fmt.Sprintf("<pre>%s</pre>\n", template.HTMLEscapeString(txt)))
 }
 
-func (c ZetRenderer) backlinks() elemz.Refbox {
-	refs := c.blinks.To(c.Z.Id())
+func (c ZetRenderer) newBlinksBox() *elemz.Refbox {
+	refs := []string{}
+	in := c.G.G.To(graph.Node{Z: c.Z}.ID())
+	for in.Next() {
+		refs = append(refs, zettel.MustFmt(in.Node().(graph.Node).Z, zettel.ListingFormat))
+	}
 
 	l := len(c.Z.Readme().Text)
-	return elemz.Refbox{
+	return &elemz.Refbox{
 		Rel:     "Backlinks",
 		Refs:    refs,
 		BoxSpan: elemz.Span{Start: l, End: l},

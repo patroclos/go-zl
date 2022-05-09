@@ -4,13 +4,13 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"io"
 	"regexp"
 	"strings"
 )
 
 const (
-	refLine = `\* (?:<.+>$|[0-9]{6}-[a-zA-Z0-9]{4}  .+$)`
+	refLine             = `\* (?:<.+>$|[0-9]{6}-[a-zA-Z0-9]{4}  .+$)`
+	RefboxType ElemType = "zl/refbox"
 )
 
 var regex = regexp.MustCompile(fmt.Sprintf(`(?m)^([a-zA-Z\[][^:\n]*):\n((?:%s)(?:\n%s)*)(\n\+ .*$(?:\n  .*$)*)?`, refLine, refLine))
@@ -18,49 +18,61 @@ var regex = regexp.MustCompile(fmt.Sprintf(`(?m)^([a-zA-Z\[][^:\n]*):\n((?:%s)(?
 type refboxParser struct {
 }
 
-func (p *refboxParser) Parse(ctx ParseCtx) (e Elem, adv int, err error) {
+func (p *refboxParser) Parse(ctx *ParseCtx) (e Elem, err error) {
 	scn := bufio.NewScanner(bytes.NewReader(ctx.Buf[ctx.Pos:]))
 	if !scn.Scan() {
-		return nil, 0, io.EOF
+		return nil, fmt.Errorf("no rel line")
 	}
 	rel := scn.Text()
 	if !strings.HasSuffix(rel, ":") {
-		return nil, 0, nil
+		// emit text
+		// el := &Text{Content: rel, span: Span{Start: ctx.Pos, End: ctx.Pos + len(rel) + 1}}
+		// return el, el.span.End - el.span.Start, nil
+		return nil, fmt.Errorf("expected rel ':' suffix")
 	}
 
 	refs := []string{}
 	extra := []string{}
-	adv = ctx.Pos + len(rel) + 1
+	adv := len(rel) + 1
 	for scn.Scan() {
+		adv += len(scn.Bytes()) + 1
 		if len(scn.Text()) == 0 {
 			break
 		}
-		adv += len(scn.Bytes()) + 1
 
 		switch scn.Text()[0] {
 		case '*':
 			refs = append(refs, scn.Text())
 		case '+':
 			extra = append(extra, scn.Text())
+		default:
+			break
 		}
 	}
 
 	for i, ref := range refs {
 		ref = strings.TrimPrefix(ref, "* ")
 		refs[i] = ref
+		if strings.HasPrefix(ref, "<") {
+			continue
+		}
 		if strings.Index(ref, "  ") == -1 {
-			if len(strings.Split(ref, "  ")) != 11 {
-				return nil, 0, fmt.Errorf("invalid ref: %q", ref)
-			}
+			return nil, fmt.Errorf("non-ref found in refbox")
 		}
 	}
 
+	if len(refs) == 0 {
+		return nil, fmt.Errorf("need at least one ref")
+	}
+
+	start := ctx.Pos
+	ctx.Pos = ctx.Pos + adv
 	return &Refbox{
 		Rel:     rel,
 		Refs:    refs,
 		Extra:   extra,
-		BoxSpan: Span{ctx.Pos, ctx.Pos + len(rel) + adv},
-	}, adv, nil
+		BoxSpan: Span{start, ctx.Pos},
+	}, nil
 }
 
 type Refbox struct {
@@ -73,6 +85,8 @@ type Refbox struct {
 func (e *Refbox) Span() Span {
 	return e.BoxSpan
 }
+
+func (e *Refbox) ElemType() ElemType { return RefboxType }
 
 func (r Refbox) String() string {
 	var b strings.Builder

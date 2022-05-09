@@ -11,7 +11,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"jensch.works/zl/pkg/zconf"
 	"jensch.works/zl/pkg/zettel"
+	"jensch.works/zl/pkg/zettel/graph"
 )
 
 //go:embed templates
@@ -81,8 +83,16 @@ func (s server) getFeed(ctx *gin.Context) {
 		zets[zet.Id()] = zet
 	}
 
-	blinks := &Backlinks{s: s.store}
-	blinks.refresh()
+	conf, err := zconf.FromEnv()
+	if err != nil {
+		ctx.Error(err)
+	}
+
+	g, err := graph.Make(s.store)
+	if err != nil {
+		ctx.AbortWithError(500, fmt.Errorf("failed creating graph"))
+		return
+	}
 
 	renderers := make([]ZetRenderer, 0, len(zets))
 	base := new(url.URL)
@@ -95,11 +105,12 @@ func (s server) getFeed(ctx *gin.Context) {
 		}
 		renderers = append(renderers, ZetRenderer{
 			Z:       zet,
+			G:       g,
+			Cfg:     conf,
 			Feed:    ids,
 			MakeUrl: UrlMaker{base}.MakeUrl,
 			Store:   s.store,
 			Tmpl:    s.templates,
-			blinks:  blinks,
 		})
 	}
 

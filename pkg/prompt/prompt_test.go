@@ -1,33 +1,34 @@
-package prompt_test
+package prompt
 
 import (
-	"reflect"
 	"testing"
 
-	"jensch.works/zl/pkg/prompt"
+	"jensch.works/zl/pkg/zettel/elemz"
 )
 
 func TestExtractQA(t *testing.T) {
 	q, a := "What is the ISO 639-3 language-code for Klingon?", "tlh"
-	txt := `
-Q. What is the ISO 639-3 language-code for Klingon?
+	txt := `Q. What is the ISO 639-3 language-code for Klingon?
 A. tlh
-	`
+`
 
-	all := prompt.ExtractAll(txt)
+	all, err := elemz.ReadWith(txt, &parseQA{})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if len(all) != 1 {
 		t.Fatalf("expected to extract 1 prompt, not %d from %s", len(all), txt)
 	}
 
-	expect := prompt.QAPrompt{
+	expect := QAPrompt{
 		Q: q,
 		A: a,
 	}
 
-	got,ok := all[0].(prompt.QAPrompt)
+	got, ok := all[0].(*QAPrompt)
 	if !ok {
-		t.Fatalf("Expected QAPrompt, got %#v", got)
+		t.Fatalf("Expected *QAPrompt, got %T", all[0])
 	}
 
 	if got.A != expect.A || got.Q != expect.Q {
@@ -35,44 +36,18 @@ A. tlh
 	}
 }
 
-// Test 
+// Test
 func TestExtractOmits(t *testing.T) {
 	sen := "Test, {{omit}}!"
-	proms := prompt.ExtractAll(sen)
-	oms := make([]prompt.OmitPrompt, 0, 8)
-	for _,p := range proms {
-		if omit,ok := p.(prompt.OmitPrompt); ok {
-			oms = append(oms, omit)
-		}
+	proms, err := elemz.ReadWith(sen, &parseOmit{})
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	l := len(oms)
-	if l == 0 {
-		t.Fatal("Omit not extracted")
+	if len(proms) != 1 {
+		t.Fatal("invalid result cound", len(proms))
 	}
-
-	if l > 1 {
-		t.Errorf("More than one omit found for '%s': %v", sen, oms)
-	}
-
-	om := oms[0]
-
-	if s := om.String(); s != sen {
-		t.Errorf("Expected omit String() to return '%s' got '%s'", sen, s)
-	}
-
-	if l := len(om.Fragments); l != 2 {
-		t.Fatalf("Expected exactly 2 fragments, got %d", l)
-	}
-	if l := len(om.Holes); l != 1 {
-		t.Fatalf("Expected exactly 1 hole, got %d", l)
-	}
-
-	if !reflect.DeepEqual(om.Fragments, []string{"Test, ", "!"}) {
-		t.Errorf("Expected Fragments to be []string{'Text, ', '!'}, found %#v", om.Fragments)
-	}
-
-	if om.Holes[0].Text != "omit" {
-		t.Errorf("Expected hole to contain text 'omit', got %s", om.Holes[0].Text)
+	if proms[0].ElemType() != OmitType {
+		t.Fatalf("expected omit, got %v", proms[0].ElemType())
 	}
 }

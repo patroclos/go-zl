@@ -3,13 +3,14 @@ package elemz
 import (
 	"fmt"
 	"io"
-	"log"
-	"strings"
 )
+
+type ElemType string
 
 type Elem interface {
 	Spaner
 	fmt.Stringer
+	ElemType() ElemType
 }
 
 type Spaner interface {
@@ -22,64 +23,25 @@ type Span struct {
 }
 
 func Read(txt string) ([]Elem, error) {
-	var res []Elem
-	for seg := range ReadChan(strings.NewReader(txt)) {
-		if seg.Err != nil {
-			return res, seg.Err
-		}
-		res = append(res, seg.Elem)
+	return ReadWith(txt, DefaultParser)
+}
+
+func ReadWith(txt string, p Parser) ([]Elem, error) {
+	var segments []Elem
+	ctx := &ParseCtx{
+		Buf: []byte(txt),
 	}
-	return res, nil
-}
+	for {
+		e, err := p.Parse(ctx)
 
-type Segment struct {
-	Elem Elem
-	Err  error
-}
-
-func ReadChan(r io.Reader) <-chan Segment {
-	c := make(chan Segment)
-	go func() {
-		defer close(c)
-		buf := make([]byte, 0, 4096)
-		pos := 0
-		for {
-			rbuffer := make([]byte, 4096)
-			l, err := r.Read(rbuffer)
+		if err != nil {
 			if err == io.EOF {
 				break
 			}
-
-			buf = append(buf, rbuffer[:l]...)
-
-			e, adv, err := DefaultParser.Parse(ParseCtx{
-				Buf: buf,
-				Pos: pos,
-			})
-			pos += adv
-
-			if e != nil {
-				c <- Segment{Elem: e}
-				log.Println(e, pos)
-			}
-			if err == io.EOF {
-				break
-			}
-
-			if err != nil {
-				c <- Segment{Err: err}
-				return
-			}
+			return segments, err
 		}
 
-		if pos < len(buf) {
-			c <- Segment{
-				Elem: &Text{
-					Content: string(buf[pos:]),
-					span:    Span{pos, pos + pos},
-				},
-			}
-		}
-	}()
-	return c
+		segments = append(segments, e)
+	}
+	return segments, nil
 }

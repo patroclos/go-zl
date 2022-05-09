@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"log"
 	"os"
 	"strings"
 
@@ -59,22 +58,24 @@ func makeCmdList(st zettel.Storage) *cli.Command {
 			return nil
 		}
 
-		scn := bufio.NewScanner(os.Stdin)
-		for scn.Scan() {
-			zets, err := st.Resolve(scn.Text())
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-
-			for _, zl := range zets {
-				c.Crawl(zl)
-			}
+		listing, err := scanListing(bufio.NewScanner(os.Stdin), st)
+		for _, zet := range listing {
+			c.Crawl(zet)
 		}
-		if err := scn.Err(); err != nil {
-			log.Println(err)
-		}
-		return nil
+		return err
 	}
 	return cmd
+}
+
+func scanListing(scn *bufio.Scanner, st zettel.Resolver) ([]zettel.Z, error) {
+	zets := []zettel.Z{}
+	for scn.Scan() {
+		zettel, err := st.Resolve(scn.Text())
+		if err != nil {
+			return zets, err
+		}
+
+		zets = append(zets, zettel...)
+	}
+	return zets, nil
 }

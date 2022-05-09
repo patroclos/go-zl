@@ -3,7 +3,6 @@ package graph
 import (
 	"strings"
 
-	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/simple"
 	"jensch.works/zl/pkg/zettel"
 	"jensch.works/zl/pkg/zettel/elemz"
@@ -20,7 +19,7 @@ func (n Node) ID() int64 {
 }
 
 type G struct {
-	graph.Directed
+	*simple.DirectedGraph
 	boxes map[int64]map[int64]elemz.Refbox
 }
 

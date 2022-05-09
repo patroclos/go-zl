@@ -38,3 +38,22 @@ func TestElems(t *testing.T) {
 		t.Errorf("expected text %q, got %q", expect, xt.String())
 	}
 }
+
+func TestSequence(t *testing.T) {
+	// txt := "<http://example.com>\n\n```mermaind\ngraph\n```\n\nSee also:\n* 0000-abcd  title"
+	// txt := "testerino:\n* 0000-blub  asdf"
+	txt := "tester\n```"
+	elems, err := Read(txt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(elems) != 2 {
+		t.Fatalf("expected 2 text elements, got %v", elems)
+	}
+	for i, el := range elems {
+		if _, ok := el.(*Text); !ok {
+			t.Errorf("expected Read()[%d] to be *elemz.Text, got %T", i, el)
+		}
+	}
+}

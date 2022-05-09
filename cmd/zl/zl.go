@@ -8,10 +8,14 @@ import (
 
 	"github.com/go-clix/cli"
 	"github.com/go-git/go-billy/v5/osfs"
+	"jensch.works/zl/pkg/prompt"
 	"jensch.works/zl/pkg/storage"
+	"jensch.works/zl/pkg/zettel/elemz"
 )
 
 func main() {
+	elemz.DefaultParser.Parsers = append(elemz.DefaultParser.Parsers, elemz.DefaultParser.Parsers[0])
+	elemz.DefaultParser.Parsers[0] = prompt.Parser()
 
 	rand.Seed(time.Now().UnixNano())
 	zlpath, ok := os.LookupEnv("ZLPATH")
@@ -42,6 +46,7 @@ func main() {
 	root.AddCommand(makeCmdTldr(store))
 	root.AddCommand(makeCmdSummary(store))
 	root.AddCommand(makeCmdPlace(store))
+	root.AddCommand(makeCmdElem(store))
 
 	if err := root.Execute(); err != nil {
 		log.Fatal(err)
