@@ -35,6 +35,7 @@ func NewServer(store zettel.Storage) (*gin.Engine, error) {
 	}
 
 	r := gin.Default()
+	r.ForwardedByClientIP = true
 	r.SetTrustedProxies(strings.Split(os.Getenv("ZLSRV_TRUSTED_PROXY"), ","))
 	r.SetHTMLTemplate(tmpl)
 
