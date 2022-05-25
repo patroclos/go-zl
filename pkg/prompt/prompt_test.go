@@ -9,12 +9,11 @@ import (
 func TestExtractQA(t *testing.T) {
 	q, a := "What is the ISO 639-3 language-code for Klingon?", "tlh"
 	txt := `Q. What is the ISO 639-3 language-code for Klingon?
-A. tlh
-`
+A. tlh`
 
-	all, err := elemz.ReadWith(txt, &parseQA{})
+	all, err := elemz.ReadWith(txt, &elemz.OneOfParser{Parsers: []elemz.Parser{&parseQA{}}})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("failed parsing QA: %v", err)
 	}
 
 	if len(all) != 1 {

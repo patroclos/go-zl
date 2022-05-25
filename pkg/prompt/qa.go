@@ -31,7 +31,7 @@ type parseQA struct{}
 func (p *parseQA) Parse(ctx *elemz.ParseCtx) (e elemz.Elem, err error) {
 	scn := bufio.NewScanner(bytes.NewReader(ctx.Buf[ctx.Pos:]))
 	if !scn.Scan() || !strings.HasPrefix(scn.Text(), "Q. ") {
-		log.Println(string(ctx.Buf[ctx.Pos:]))
+		log.Printf("%#v\n", ctx)
 		return nil, fmt.Errorf("'Q. ' prefix not found")
 	}
 

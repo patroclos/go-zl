@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"log"
 	"strings"
 
 	"jensch.works/zl/pkg/zettel/elemz"
@@ -43,7 +44,7 @@ func (_ *parseOmit) Parse(ctx *elemz.ParseCtx) (elemz.Elem, error) {
 	scn := bufio.NewScanner(bytes.NewReader(ctx.Buf[ctx.Pos:]))
 
 	if !scn.Scan() || !strings.Contains(scn.Text(), "{{") || !strings.Contains(scn.Text(), "}}") {
-		return nil, fmt.Errorf("invalid begin")
+		return nil, fmt.Errorf("invalid begin: %q", scn.Text())
 	}
 
 	frags, holes, err := readOmit(scn.Text())
@@ -55,6 +56,7 @@ func (_ *parseOmit) Parse(ctx *elemz.ParseCtx) (elemz.Elem, error) {
 		Fragments: frags,
 		Holes:     holes,
 	}
+	log.Printf("omit: <%v, %v> %q\n", frags, holes, p.String())
 
 	start := ctx.Pos
 	ctx.Pos += len(p.String())
@@ -93,29 +95,39 @@ func readOmit(txt string) (fragments []string, holes []string, err error) {
 			open = 0
 			continue
 		case 2:
+			// inside hole, waiting for '}}'
 			switch clos {
 			case 0:
-				if char == '}' {
+				switch char {
+				case '}':
 					clos = 1
-					continue
+				default:
+					hol.WriteRune(char)
 				}
-				hol.WriteRune(char)
 				continue
 			case 1:
-				if char == '}' {
-					clos = 2
-					continue
+				switch char {
+				case '}':
+					fragments = append(fragments, frag.String())
+					holes = append(holes, hol.String())
+					frag.Reset()
+					hol.Reset()
+					clos = 0
+					open = 0
+				default:
+					hol.WriteRune('}')
+					hol.WriteRune(char)
+					clos = 0
 				}
-				hol.WriteRune('}')
-				hol.WriteRune(char)
-				clos = 0
 				continue
-			case 2:
-				fragments = append(fragments, frag.String())
-				holes = append(holes, hol.String())
 			}
 		}
 	}
+
+	if frag.Len() > 0 {
+		fragments = append(fragments, frag.String())
+	}
+	log.Println("last frag", txt)
 
 	return fragments, holes, nil
 }

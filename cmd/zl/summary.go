@@ -67,8 +67,8 @@ func makeCmdSummary(st zettel.Storage) *cli.Command {
 			// * prune all nodes not in the list from the graph
 		}
 
-		reduced := community.Modularize(g.G, 2, nil)
-		fmt.Printf("Num Nodes: %d\n", g.G.Nodes().Len())
+		reduced := community.Modularize(g, 2, nil)
+		fmt.Printf("Num Nodes: %d\n", len(g.Verts))
 		fmt.Printf("Communities: %d\n\n", len(reduced.Communities()))
 
 		comm := reduced.Communities()
@@ -78,7 +78,7 @@ func makeCmdSummary(st zettel.Storage) *cli.Command {
 			}
 			fmt.Printf("COMMUNITY %d:\n", i)
 			for _, n := range com {
-				fmt.Println(printZet(g.Nodes[n.ID()].Z))
+				fmt.Println(printZet(g.Verts[n.ID()].Z))
 			}
 			fmt.Println()
 		}

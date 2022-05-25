@@ -27,21 +27,21 @@ func Read(txt string) ([]Elem, error) {
 }
 
 func ReadWith(txt string, p Parser) ([]Elem, error) {
-	var segments []Elem
-	ctx := &ParseCtx{
-		Buf: []byte(txt),
-	}
-	for {
+	var elements []Elem
+	ctx := &ParseCtx{Buf: []byte(txt)}
+
+	for ctx.Pos < len(ctx.Buf) {
 		e, err := p.Parse(ctx)
 
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return segments, err
+		if err == io.EOF {
+			break
 		}
 
-		segments = append(segments, e)
+		if err != nil {
+			return elements, err
+		}
+
+		elements = append(elements, e)
 	}
-	return segments, nil
+	return elements, nil
 }

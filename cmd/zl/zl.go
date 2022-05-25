@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
 	"os"
+	"runtime/debug"
 	"time"
 
 	"github.com/go-clix/cli"
@@ -29,9 +31,22 @@ func main() {
 		log.Fatal(err)
 	}
 
-	root := &cli.Command{}
-	root.Use = "zl"
-	root.Run = makeCmdList(store).Run
+	ver := "dunno"
+	info, ok := debug.ReadBuildInfo()
+	if ok {
+		ver = fmt.Sprintf("go:%q zl:%s", info.GoVersion, info.Main.Version)
+	}
+	root := &cli.Command{
+		Use:     "zl",
+		Version: ver,
+		Run:     makeCmdList(store).Run,
+	}
+	format := root.Flags().StringP("format", "f", "listing", "Format string")
+	root.Run = func(cmd *cli.Command, args []string) error {
+		sub := makeCmdList(store)
+		os.Args = append(os.Args[0:1], "-f", *format)
+		return sub.Execute()
+	}
 	root.AddCommand(makeCmdList(store))
 	root.AddCommand(makeCmdCat(store))
 	root.AddCommand(makeCmdNew(store))

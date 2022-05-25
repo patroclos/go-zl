@@ -120,7 +120,7 @@ func (c *ZetRenderer) Rendered() (html template.HTML) {
 				continue
 			}
 		plain:
-			c.sb.WriteString(fmt.Sprintf("<pre><code>%s</code></pre>", template.HTMLEscapeString(elem.Code)))
+			c.sb.WriteString(fmt.Sprintf(`<pre class="code"><code>%s</code></pre>`, template.HTMLEscapeString(elem.Code)))
 		default:
 			c.pre(elem.String())
 		}
@@ -136,7 +136,7 @@ func (c *ZetRenderer) pre(txt string) {
 
 func (c ZetRenderer) newBlinksBox() *elemz.Refbox {
 	refs := []string{}
-	in := c.G.G.To(graph.Node{Z: c.Z}.ID())
+	in := c.G.To(graph.Node{Z: c.Z}.ID())
 	for in.Next() {
 		refs = append(refs, zettel.MustFmt(in.Node().(graph.Node).Z, zettel.ListingFormat))
 	}

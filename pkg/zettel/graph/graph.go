@@ -3,27 +3,105 @@ package graph
 import (
 	"strings"
 
+	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/simple"
 	"jensch.works/zl/pkg/zettel"
 	"jensch.works/zl/pkg/zettel/elemz"
 )
 
-// https://pkg.go.dev/gonum.org/v1/gonum/graph?utm_source=godoc#Graph
-
-type Node struct {
-	Z zettel.Z
-}
-
-func (n Node) ID() int64 {
-	return int64(n.Z.Metadata().CreateTime.Nanosecond())
-}
-
-type G struct {
+// G is a gonum-powered Z-graph providing access to parsed refbox.
+// This struct wraps a simple graph.Directed implementation, bolting on metadata
+// about boxes, relations, etc.
+type Graph struct {
 	*simple.DirectedGraph
+	Verts map[int64]Node
+	Zets  map[string]zettel.Z
 	boxes map[int64]map[int64]elemz.Refbox
 }
 
-func (g *G) EdgeRefbox(from, to int64) *elemz.Refbox {
+func (g *Graph) Refbox(from, to zettel.Z) (elemz.Refbox, bool) {
+	x, ok := g.boxes[Node{from}.ID()][Node{to}.ID()]
+	return x, ok
+}
+
+func Id(z zettel.Z) int64 {
+	return Node{z}.ID()
+}
+
+func (g *Graph) NodeZ(id int64) *Node {
+	no, ok := g.Verts[id]
+	if !ok {
+		return nil
+	}
+	return &no
+}
+
+func (g *Graph) Node(id int64) graph.Node {
+	return g.NodeZ(id)
+}
+
+func Make(st zettel.ZettelerIter) (*Graph, error) {
+	g := &Graph{
+		DirectedGraph: simple.NewDirectedGraph(),
+		Verts:         map[int64]Node{},
+		Zets:          map[string]zettel.Z{},
+		boxes:         map[int64]map[int64]elemz.Refbox{},
+	}
+
+	iter := st.Iter()
+	for iter.Next() {
+		n := Node{iter.Zet()}
+		nId := n.ID()
+
+		if _, ok := g.Verts[nId]; !ok {
+			g.AddNode(n)
+			g.Verts[nId] = n
+			g.Zets[n.Z.Id()] = n.Z
+		}
+
+		bm := g.boxes[nId]
+		if bm == nil {
+			bm = map[int64]elemz.Refbox{}
+		}
+
+		boxes := elemz.Refboxes(n.Z.Readme().Text)
+		for _, box := range boxes {
+			for _, ref := range box.Refs {
+				id := strings.Fields(ref)[0]
+				// TODO: *Graph should be on Z level but also include external links.  No non navigational
+				// text elements tho.  The refbox remains the universal tool.
+				if strings.HasPrefix(id, "<") {
+					// TODO: emit an egress knode
+					continue
+				}
+
+				zet, err := st.Zettel(id)
+				if err != nil {
+					continue
+				}
+
+				n2 := Node{Z: zet}
+				if nId == n2.ID() {
+					continue
+				}
+
+				if _, ok := g.Verts[n2.ID()]; !ok {
+					g.AddNode(n2)
+					g.Verts[n2.ID()] = n2
+					g.Zets[n2.Z.Id()] = n2.Z
+				}
+
+				bm[n2.ID()] = box
+				g.SetEdge(g.NewEdge(n, n2))
+			}
+		} // end range boxes
+
+		g.boxes[nId] = bm
+	} // end iter.Next
+	return g, nil
+}
+
+func (g *Graph) EdgeRefbox(from, to int64) *elemz.Refbox {
 	if !g.HasEdgeFromTo(from, to) {
 		return nil
 	}
@@ -38,7 +116,8 @@ func (g *G) EdgeRefbox(from, to int64) *elemz.Refbox {
 	return &box
 }
 
-func MakeG(store zettel.ZettelerIter) (*G, map[int64]zettel.Z, []error) {
+/*
+func MakeG(store zettel.ZettelerIter) (*Graph, map[int64]zettel.Z, []error) {
 	var errs []error
 
 	sg := simple.NewDirectedGraph()
@@ -86,5 +165,9 @@ func MakeG(store zettel.ZettelerIter) (*G, map[int64]zettel.Z, []error) {
 		boxmap[n.ID()] = bm
 	}
 
-	return &G{sg, boxmap}, idmap, errs
+	return &Graph{
+		DirectedGraph: 5,
+		sg: boxmap,
+	}, idmap, errs
 }
+*/

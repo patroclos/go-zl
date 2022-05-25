@@ -33,7 +33,7 @@ func TestElems(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected *Text, got %T", x[1])
 	}
-	expect := "\n\nblarb"
+	expect := "\n\nblarb\n"
 	if xt.String() != expect {
 		t.Errorf("expected text %q, got %q", expect, xt.String())
 	}

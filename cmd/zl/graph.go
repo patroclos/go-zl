@@ -23,16 +23,16 @@ func makeCmdGraph(st zettel.Storage) *cli.Command {
 			domain = st
 		}
 
-		zg, nodemap, errs := graph.MakeG(st)
-		for _, err := range errs {
-			fmt.Fprintln(os.Stderr, err)
+		g, err := graph.Make(st)
+		if err != nil {
+			panic(err)
 		}
 
-		modular := community.Modularize(zg, 2, nil)
+		modular := community.Modularize(g, 2, nil)
 
 		// TODO: find hubs from communities
-		_, _, _ = domain, nodemap, modular
-		return nil
+		_, _ = domain, modular
+		return fmt.Errorf("tbd")
 	}
 	cmd.AddCommand(cmdHubs)
 

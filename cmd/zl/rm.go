@@ -37,9 +37,9 @@ func makeCmdRemove(st zettel.Storage) *cli.Command {
 		}
 
 		backlinks := make([]zettel.Z, 0, 8)
-		to := g.G.To(graph.Node{Z: zet}.ID())
+		to := g.To(graph.Node{Z: zet}.ID())
 		for to.Next() {
-			backlinks = append(backlinks, g.Node(to.Node().ID()).Z)
+			backlinks = append(backlinks, g.NodeZ(to.Node().ID()).Z)
 		}
 
 		listing := zettel.MustFmt(zet, zettel.ListingFormat)

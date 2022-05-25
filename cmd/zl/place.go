@@ -18,6 +18,7 @@ func makeCmdPlace(st zettel.Storage) *cli.Command {
 	cmd.Use = "place <z-spec>"
 	id := cmd.Flags().String("id", "", `default is newly generated for today`)
 	wantEdit := cmd.Flags().BoolP("edit", "e", false, `open the new-Z in $EDITOR`)
+	inbox := cmd.Flags().StringP("inbox", "i", "", "set label zl/inbox to the provided value")
 
 	cmd.Run = func(cmd *cli.Command, args []string) error {
 		base, err := zettel.Build(func(b zettel.Builder) error {
@@ -27,6 +28,9 @@ func makeCmdPlace(st zettel.Storage) *cli.Command {
 				b.Id(*id)
 			}
 
+			if *inbox != "" {
+				b.Metadata().Labels["zl/inbox"] = *inbox
+			}
 			q, err := search.Query(strings.Join(args, " "))
 			if err != nil {
 				return fmt.Errorf("invalid Z-spec: %w", err)
