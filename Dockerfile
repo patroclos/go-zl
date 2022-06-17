@@ -13,7 +13,6 @@ RUN npm install
 USER root
 RUN ln -s /home/mermaidcli/node_modules/.bin/mmdc /usr/local/bin/mmdc
 RUN apk add --no-cache ca-certificates bash chromium
-RUN ln -s $(which chromium) /usr/bin/chrome
 COPY --from=builder /app/zl /app/zlsrv /bin/
 COPY --from=builder /app/scripts /filters
 RUN mkdir /zettel
