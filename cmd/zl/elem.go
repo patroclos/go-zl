@@ -42,7 +42,7 @@ func makeCmdElem(st zettel.Storage) *cli.Command {
 
 			fmt.Printf("%s\n", lipgloss.NewStyle().Bold(true).Render(zettel.MustFmt(z, zettel.ListingFormat)))
 			for i, el := range elems {
-				ok := types == nil
+				ok := len(*types) == 0
 				for _, t := range *types {
 					if el.ElemType() == elemz.ElemType(t) {
 						ok = true
@@ -52,7 +52,7 @@ func makeCmdElem(st zettel.Storage) *cli.Command {
 				if !ok {
 					continue
 				}
-				fmt.Printf("[%d] %T %v", i, el.ElemType(), el.Span())
+				fmt.Printf("[%d] %s %v\n%s\n\n", i, el.ElemType(), el.Span(), el)
 			}
 			fmt.Println()
 		}

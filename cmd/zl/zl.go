@@ -16,8 +16,7 @@ import (
 )
 
 func main() {
-	elemz.DefaultParser.Parsers = append(elemz.DefaultParser.Parsers, elemz.DefaultParser.Parsers[0])
-	elemz.DefaultParser.Parsers[0] = prompt.Parser()
+	elemz.DefaultParser.Parsers = append([]elemz.Parser{prompt.Parser()}, elemz.DefaultParser.Parsers...)
 
 	rand.Seed(time.Now().UnixNano())
 	zlpath, ok := os.LookupEnv("ZLPATH")
