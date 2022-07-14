@@ -1,7 +1,6 @@
 package crawl
 
 import (
-	"fmt"
 	"strings"
 	"sync"
 
@@ -74,7 +73,7 @@ func New(g *graph.Graph, f CrawlFn) Crawler {
 func (b crawler) Crawl(zets ...zettel.Z) {
 	cr := &crawl{
 		g:       *b.g,
-		m:       make(map[int64]struct{}),
+		seen:    make(map[int64]struct{}),
 		rw:      new(sync.RWMutex),
 		wg:      new(sync.WaitGroup),
 		root:    zets,
@@ -87,7 +86,7 @@ type crawl struct {
 	root    []zettel.Z
 	crawler CrawlFn
 	g       graph.Graph
-	m       map[int64]struct{}
+	seen    map[int64]struct{}
 	rw      *sync.RWMutex
 	wg      *sync.WaitGroup
 	errs    []error
@@ -106,36 +105,15 @@ func (c *crawl) Run() {
 	c.wg.Wait()
 }
 
-func (c *crawl) doId(id int64, from Node, reason RecurseMask) {
-	c.rw.Lock()
-	if _, ok := c.m[id]; ok {
-		c.rw.Unlock()
-		return
-	}
-	no := c.g.NodeZ(id)
-	if no == nil {
-		c.errs = append(c.errs, fmt.Errorf("node doesnt exist %q", id))
-		return
-	}
-
-	pth := make([]*Node, len(from.Path)+1)
-	pth[len(from.Path)] = &from
-	for i := range from.Path {
-		pth[i] = from.Path[i]
-	}
-	c.wg.Add(1)
-	go c.do(Node{N: no, Path: pth, Reason: Reason{reason, c.g.EdgeRefbox(from.N.ID(), id)}})
-}
-
 func (c *crawl) do(cra Node) {
 	defer c.wg.Done()
 	c.rw.Lock()
 	id := cra.N.ID()
-	if _, ok := c.m[id]; ok {
+	if _, ok := c.seen[id]; ok {
 		c.rw.Unlock()
 		return
 	}
-	c.m[id] = struct{}{}
+	c.seen[id] = struct{}{}
 	c.rw.Unlock()
 
 	mask := c.crawler(cra)
@@ -148,8 +126,8 @@ func (c *crawl) do(cra Node) {
 			for i := range cra.Path {
 				pth[i] = cra.Path[i]
 			}
-			c.wg.Add(1)
 			n := inbound.Node().(graph.Node)
+			c.wg.Add(1)
 			go c.do(Node{N: &n, Path: pth, Reason: Reason{Inbound, c.g.EdgeRefbox(inbound.Node().ID(), id)}})
 		}
 	}
@@ -157,13 +135,14 @@ func (c *crawl) do(cra Node) {
 	if mask.Has(Outbound) {
 		outbound := c.g.From(id)
 		for outbound.Next() {
-			c.wg.Add(1)
 			pth := make([]*Node, len(cra.Path)+1)
 			pth[len(cra.Path)] = &cra
 			for i := range cra.Path {
 				pth[i] = cra.Path[i]
 			}
-			go c.do(Node{N: c.g.NodeZ(id), Path: pth, Reason: Reason{Outbound, c.g.EdgeRefbox(id, outbound.Node().ID())}})
+			n := outbound.Node().(graph.Node)
+			c.wg.Add(1)
+			go c.do(Node{N: &n, Path: pth, Reason: Reason{Outbound, c.g.EdgeRefbox(id, outbound.Node().ID())}})
 		}
 	}
 }
