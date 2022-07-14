@@ -91,7 +91,7 @@ func (e *Refbox) ElemType() ElemType { return RefboxType }
 func (r Refbox) String() string {
 	var b strings.Builder
 
-	b.WriteString(fmt.Sprintf("%s\n", r.Rel))
+	b.WriteString(fmt.Sprintf("%s:\n", r.Rel))
 	if len(r.Refs) > 0 {
 		b.WriteString(fmt.Sprintf("* %s", r.Refs[0]))
 		for _, x := range r.Refs[1:] {
