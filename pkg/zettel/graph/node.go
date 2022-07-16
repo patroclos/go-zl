@@ -11,5 +11,5 @@ type Node struct {
 }
 
 func (n Node) ID() int64 {
-	return int64(n.Z.Metadata().CreateTime.Nanosecond())
+	return int64(n.Z.Metadata().CreateTime.UnixMilli())
 }
