@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -48,7 +47,7 @@ func makeCmdPlace(st zettel.Storage) *cli.Command {
 				return nil
 			}
 
-			text, err := ioutil.ReadAll(os.Stdin)
+			text, err := io.ReadAll(os.Stdin)
 			if err != nil {
 				return fmt.Errorf("failed reading from stdin: %w", err)
 			}

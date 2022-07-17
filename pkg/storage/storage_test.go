@@ -2,7 +2,7 @@ package storage
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"strings"
 	"testing"
 
@@ -64,7 +64,7 @@ func TestStore_PutNew(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	bytes, _ := ioutil.ReadAll(readme)
+	bytes, _ := io.ReadAll(readme)
 	got := string(bytes)
 
 	expect := fmt.Sprintf("# %s\n\n%s", testTitle, testContent)

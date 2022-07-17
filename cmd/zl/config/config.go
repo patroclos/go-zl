@@ -2,7 +2,6 @@ package config
 
 import (
 	"io"
-	"io/ioutil"
 	"os"
 
 	"github.com/kirsle/configdir"
@@ -47,7 +46,7 @@ func SetDefault(c *Config) error {
 }
 
 func Read(r io.Reader) (*Config, error) {
-	b, err := ioutil.ReadAll(r)
+	b, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}

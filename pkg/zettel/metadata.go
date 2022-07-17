@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -104,7 +103,7 @@ type metaDto struct {
 
 // Must either return (non-nil, nil) or (nil, non-nil)
 func ParseMeta(r io.Reader) (*MetaInfo, error) {
-	in, err := ioutil.ReadAll(r)
+	in, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
