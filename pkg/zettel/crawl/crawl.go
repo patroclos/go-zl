@@ -40,8 +40,8 @@ func (m RecurseMask) String() string {
 }
 
 type Node struct {
-	N      *graph.Node
-	Path   []*Node
+	N      graph.Node
+	Path   []Node
 	Reason Reason
 }
 
@@ -92,8 +92,8 @@ func (c *crawl) Run() {
 	c.wg.Add(len(c.root))
 	for i := range c.root {
 		go c.do(Node{
-			N:      &graph.Node{Z: c.root[i]},
-			Path:   []*Node{},
+			N:      c.g.Verts[c.g.Id(c.root[i])],
+			Path:   []Node{},
 			Reason: Reason{},
 		})
 	}
@@ -116,28 +116,28 @@ func (c *crawl) do(cra Node) {
 	if mask.Has(Inbound) {
 		inbound := c.g.To(id)
 		for inbound.Next() {
-			pth := make([]*Node, len(cra.Path)+1)
-			pth[len(cra.Path)] = &cra
+			pth := make([]Node, len(cra.Path)+1)
+			pth[len(cra.Path)] = cra
 			for i := range cra.Path {
 				pth[i] = cra.Path[i]
 			}
 			n := inbound.Node().(graph.Node)
 			c.wg.Add(1)
-			go c.do(Node{N: &n, Path: pth, Reason: Reason{Inbound, c.g.EdgeRefbox(inbound.Node().ID(), id)}})
+			go c.do(Node{N: n, Path: pth, Reason: Reason{Inbound, c.g.EdgeRefbox(inbound.Node().ID(), id)}})
 		}
 	}
 
 	if mask.Has(Outbound) {
 		outbound := c.g.From(id)
 		for outbound.Next() {
-			pth := make([]*Node, len(cra.Path)+1)
-			pth[len(cra.Path)] = &cra
+			pth := make([]Node, len(cra.Path)+1)
+			pth[len(cra.Path)] = cra
 			for i := range cra.Path {
 				pth[i] = cra.Path[i]
 			}
 			n := outbound.Node().(graph.Node)
 			c.wg.Add(1)
-			go c.do(Node{N: &n, Path: pth, Reason: Reason{Outbound, c.g.EdgeRefbox(id, outbound.Node().ID())}})
+			go c.do(Node{N: n, Path: pth, Reason: Reason{Outbound, c.g.EdgeRefbox(id, outbound.Node().ID())}})
 		}
 	}
 }

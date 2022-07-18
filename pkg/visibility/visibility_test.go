@@ -2,6 +2,7 @@ package visibility
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/go-git/go-billy/v5/memfs"
@@ -11,6 +12,10 @@ import (
 	"jensch.works/zl/pkg/zettel/graph"
 )
 
+// This test fails ever since moving from Nanosecond Node-IDs to UnixMilli, because
+// both created Zs usually are created in the same millisecond.  The cheap fix would be to use UnixMicro or UnixNano, but
+// the saner approach that I want to take would be to assign IDs to the Zs sequentially when creating the graph and storing
+// those as a map
 func TestTaintView(t *testing.T) {
 	st, _ := storage.NewStore(memfs.New())
 	id1, id2 := zettel.MakeId(), zettel.MakeId()
@@ -35,10 +40,21 @@ func TestTaintView(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	visited := make([]zettel.Z, 0)
+	if g.Edges().Len() != 2 {
+		t.Fatal("wrong edge count")
+	}
+
+	nodes := g.Nodes()
+	if nodes.Len() != 2 {
+		t.Fatal("wrong node count")
+	}
+
+	var visited []zettel.Z = nil
+	var mu sync.Mutex
 	inner := func(n crawl.Node) crawl.RecurseMask {
+		mu.Lock()
+		defer mu.Unlock()
 		visited = append(visited, n.N.Z)
-		t.Log("visit", n.N.Z)
 		return crawl.All
 	}
 	taintView := TaintView(inner, []string{"sensitive"})
@@ -46,7 +62,7 @@ func TestTaintView(t *testing.T) {
 	crawl.New(g, taintView).Crawl(a)
 
 	if len(visited) != 2 {
-		t.Errorf("expected 2 hits, got %d", len(visited))
+		t.Errorf("expected 2 hits, got %v", visited)
 	}
 
 	visited = make([]zettel.Z, 0)

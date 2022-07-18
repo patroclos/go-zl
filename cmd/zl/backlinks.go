@@ -37,7 +37,7 @@ func makeCmdBacklinks(st zettel.Storage) *cli.Command {
 			return err
 		}
 
-		idSelf := graph.Id(zl)
+		idSelf := g.Id(zl)
 		inbound := g.To(idSelf)
 		for inbound.Next() {
 			idIn := inbound.Node().ID()

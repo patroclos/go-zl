@@ -9,6 +9,15 @@ import (
 	"jensch.works/zl/pkg/zettel/elemz"
 )
 
+type Node struct {
+	Z  zettel.Z
+	id int64
+}
+
+func (n Node) ID() int64 {
+	return n.id
+}
+
 // G is a gonum-powered Z-graph providing access to parsed refbox.
 // This struct wraps a simple graph.Directed implementation, bolting on metadata
 // about boxes, relations, etc.
@@ -16,16 +25,17 @@ type Graph struct {
 	*simple.DirectedGraph
 	Verts map[int64]Node
 	Zets  map[string]zettel.Z
+	ids   map[string]int64
 	boxes map[int64]map[int64]elemz.Refbox
 }
 
 func (g *Graph) Refbox(from, to zettel.Z) (elemz.Refbox, bool) {
-	x, ok := g.boxes[Node{from}.ID()][Node{to}.ID()]
+	x, ok := g.boxes[g.Id(from)][g.Id(to)]
 	return x, ok
 }
 
-func Id(z zettel.Z) int64 {
-	return Node{z}.ID()
+func (g *Graph) Id(z zettel.Z) int64 {
+	return g.ids[z.Id()]
 }
 
 func (g *Graph) NodeZ(id int64) *Node {
@@ -46,20 +56,21 @@ func Make(st zettel.ZettelerIter) (*Graph, error) {
 		Verts:         map[int64]Node{},
 		Zets:          map[string]zettel.Z{},
 		boxes:         map[int64]map[int64]elemz.Refbox{},
+		ids:           map[string]int64{},
 	}
 
 	iter := st.Iter()
+	var nextId int64
 	for iter.Next() {
-		n := Node{iter.Zet()}
-		nId := n.ID()
-
-		if _, ok := g.Verts[nId]; !ok {
-			g.AddNode(n)
-			g.Verts[nId] = n
-			g.Zets[n.Z.Id()] = n.Z
-		}
-
-		bm := g.boxes[nId]
+		nextId++
+		n := Node{Z: iter.Zet(), id: nextId}
+		g.AddNode(n)
+		g.Verts[n.ID()] = n
+		g.Zets[n.Z.Id()] = n.Z
+		g.ids[n.Z.Id()] = n.ID()
+	}
+	for _, n := range g.Verts {
+		bm := g.boxes[n.ID()]
 		if bm == nil {
 			bm = map[int64]elemz.Refbox{}
 		}
@@ -71,31 +82,18 @@ func Make(st zettel.ZettelerIter) (*Graph, error) {
 					// TODO: emit an egress knode
 					continue
 				}
-				id := strings.Fields(ref)[0]
-
-				zet, err := st.Zettel(id)
-				if err != nil {
+				id, ok := g.ids[strings.Fields(ref)[0]]
+				if !ok || n.id == id {
 					continue
 				}
 
-				n2 := Node{Z: zet}
-				if nId == n2.ID() {
-					continue
-				}
-
-				if _, ok := g.Verts[n2.ID()]; !ok {
-					g.AddNode(n2)
-					g.Verts[n2.ID()] = n2
-					g.Zets[n2.Z.Id()] = n2.Z
-				}
-
+				n2 := g.Verts[id]
 				bm[n2.ID()] = box
 				g.SetEdge(g.NewEdge(n, n2))
 			}
-		} // end range boxes
-
-		g.boxes[nId] = bm
-	} // end iter.Next
+		}
+		g.boxes[n.ID()] = bm
+	}
 	return g, nil
 }
 

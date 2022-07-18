@@ -136,7 +136,7 @@ func (c *ZetRenderer) pre(txt string) {
 
 func (c ZetRenderer) newBlinksBox() *elemz.Refbox {
 	refs := []string{}
-	in := c.G.To(graph.Node{Z: c.Z}.ID())
+	in := c.G.To(c.G.Id(c.Z))
 	for in.Next() {
 		refs = append(refs, zettel.MustFmt(in.Node().(graph.Node).Z, zettel.ListingFormat))
 	}
