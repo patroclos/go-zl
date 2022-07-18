@@ -1,7 +1,7 @@
 package crawl
 
 import (
-	"strings"
+	"fmt"
 	"sync"
 
 	"jensch.works/zl/pkg/zettel"
@@ -32,16 +32,11 @@ func (m RecurseMask) String() string {
 		return "In"
 	case Outbound:
 		return "Out"
+	case All:
+		return "All"
+	default:
+		return fmt.Sprintf("RecurseMask(%d)", m)
 	}
-
-	var parts []string
-	for k := Inbound; k < Outbound; k <<= 1 {
-		if m&k != 0 {
-			parts = append(parts, k.String())
-		}
-	}
-
-	return strings.Join(parts, " | ")
 }
 
 type Node struct {

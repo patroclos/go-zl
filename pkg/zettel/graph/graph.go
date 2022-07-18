@@ -67,13 +67,11 @@ func Make(st zettel.ZettelerIter) (*Graph, error) {
 		boxes := elemz.Refboxes(n.Z.Readme().Text)
 		for _, box := range boxes {
 			for _, ref := range box.Refs {
-				id := strings.Fields(ref)[0]
-				// TODO: *Graph should be on Z level but also include external links.  No non navigational
-				// text elements tho.  The refbox remains the universal tool.
-				if strings.HasPrefix(id, "<") {
+				if strings.HasPrefix(ref, "<") {
 					// TODO: emit an egress knode
 					continue
 				}
+				id := strings.Fields(ref)[0]
 
 				zet, err := st.Zettel(id)
 				if err != nil {
