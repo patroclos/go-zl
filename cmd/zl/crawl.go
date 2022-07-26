@@ -28,7 +28,7 @@ func (spec depthCrawler) Crawl(c crawl.Node) crawl.RecurseMask {
 		if strings.Contains(rel, " ") {
 			rel = fmt.Sprintf("%#v", rel)
 		}
-		fmt.Print(zettel.MustFmt(c.N.Z, fmt.Sprintf("{{.Id}}  {{.Title}} parent:%s/%s/refbox[%s]\n", c.Path[0].N.Z.Id(), c.Reason.Mask.String(), c.Reason.Refbox.Rel)))
+		fmt.Print(zettel.MustFmt(c.N.Z, fmt.Sprintf("{{.Id}}  {{.Title}} parent:%s/%s/refbox[%s]\n", c.Path[len(c.Path)-1].N.Z.Id(), c.Reason.Mask.String(), c.Reason.Refbox.Rel)))
 	}
 	return crawl.All
 }
