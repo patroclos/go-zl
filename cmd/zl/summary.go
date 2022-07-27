@@ -26,6 +26,13 @@ func makeCmdSummary(st zettel.Storage) *cli.Command {
 			rels := make(map[string]struct{ boxes, refs int })
 
 			iter := st.Iter()
+			if !isTerminal(os.Stdin) {
+				listing, err := scanListing(bufio.NewScanner(os.Stdin), st)
+				if err != nil {
+					return fmt.Errorf("failed reading listing from stdin: %w", err)
+				}
+				iter = zettel.Slice(listing).Iter()
+			}
 			for iter.Next() {
 				txt := iter.Zet().Readme().Text
 				boxes := elemz.Refboxes(txt)
