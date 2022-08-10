@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/go-clix/cli"
-	"jensch.works/zl/pkg/zettel"
-	"jensch.works/zl/pkg/zettel/crawl"
-	"jensch.works/zl/pkg/zettel/graph"
+	"git.jensch.dev/zl/pkg/zettel"
+	"git.jensch.dev/zl/pkg/zettel/crawl"
+	"git.jensch.dev/zl/pkg/zettel/graph"
 )
 
 var uriRegex = regexp.MustCompile(`\w+:(\/?\/?)[^\s]+`)

@@ -7,8 +7,8 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/go-clix/cli"
-	"jensch.works/zl/pkg/zettel"
-	"jensch.works/zl/pkg/zettel/elemz"
+	"git.jensch.dev/zl/pkg/zettel"
+	"git.jensch.dev/zl/pkg/zettel/elemz"
 )
 
 // `elem [-t elem-type[,elem-type...]] <zref>` prints a summary of the text-elements

@@ -12,9 +12,9 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/cache"
 	"github.com/go-git/go-git/v5/storage/filesystem"
-	"jensch.works/zl/pkg/storage/strutil"
-	_ "jensch.works/zl/pkg/storage/strutil"
-	"jensch.works/zl/pkg/zettel"
+	"git.jensch.dev/zl/pkg/storage/strutil"
+	_ "git.jensch.dev/zl/pkg/storage/strutil"
+	"git.jensch.dev/zl/pkg/zettel"
 )
 
 func NewStore(dir billy.Filesystem) (zettel.Storage, error) {

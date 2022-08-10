@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"jensch.works/zl/pkg/zettel"
+	"git.jensch.dev/zl/pkg/zettel"
 )
 
 type Listing struct {

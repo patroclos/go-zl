@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"jensch.works/zl/pkg/zettel/elemz"
+	"git.jensch.dev/zl/pkg/zettel/elemz"
 )
 
 type QAPrompt struct {

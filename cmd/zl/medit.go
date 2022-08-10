@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-clix/cli"
 	"gopkg.in/yaml.v2"
-	"jensch.works/zl/pkg/zettel"
+	"git.jensch.dev/zl/pkg/zettel"
 )
 
 func makeCmdMetaEdit(st zettel.Storage) *cli.Command {

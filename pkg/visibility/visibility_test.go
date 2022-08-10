@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	"github.com/go-git/go-billy/v5/memfs"
-	"jensch.works/zl/pkg/storage"
-	"jensch.works/zl/pkg/zettel"
-	"jensch.works/zl/pkg/zettel/crawl"
-	"jensch.works/zl/pkg/zettel/graph"
+	"git.jensch.dev/zl/pkg/storage"
+	"git.jensch.dev/zl/pkg/zettel"
+	"git.jensch.dev/zl/pkg/zettel/crawl"
+	"git.jensch.dev/zl/pkg/zettel/graph"
 )
 
 // This test fails ever since moving from Nanosecond Node-IDs to UnixMilli, because

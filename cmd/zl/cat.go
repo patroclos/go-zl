@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/go-clix/cli"
-	"jensch.works/zl/pkg/zettel"
+	"git.jensch.dev/zl/pkg/zettel"
 )
 
 func makeCmdCat(st zettel.Storage) *cli.Command {

@@ -1,8 +1,8 @@
 package visibility
 
 import (
-	"jensch.works/zl/pkg/zettel"
-	"jensch.works/zl/pkg/zettel/crawl"
+	"git.jensch.dev/zl/pkg/zettel"
+	"git.jensch.dev/zl/pkg/zettel/crawl"
 )
 
 func TaintView(inner crawl.CrawlFn, tolerate []string) crawl.CrawlFn {

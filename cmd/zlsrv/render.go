@@ -9,10 +9,10 @@ import (
 	"os/exec"
 	"strings"
 
-	"jensch.works/zl/pkg/zconf"
-	"jensch.works/zl/pkg/zettel"
-	"jensch.works/zl/pkg/zettel/elemz"
-	"jensch.works/zl/pkg/zettel/graph"
+	"git.jensch.dev/zl/pkg/zconf"
+	"git.jensch.dev/zl/pkg/zettel"
+	"git.jensch.dev/zl/pkg/zettel/elemz"
+	"git.jensch.dev/zl/pkg/zettel/graph"
 )
 
 type ZetRenderer struct {

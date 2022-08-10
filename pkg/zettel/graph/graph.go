@@ -5,8 +5,8 @@ import (
 
 	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/simple"
-	"jensch.works/zl/pkg/zettel"
-	"jensch.works/zl/pkg/zettel/elemz"
+	"git.jensch.dev/zl/pkg/zettel"
+	"git.jensch.dev/zl/pkg/zettel/elemz"
 )
 
 type Node struct {

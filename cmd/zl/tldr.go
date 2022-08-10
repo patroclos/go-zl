@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-clix/cli"
 	"github.com/jdkato/prose/summarize"
-	"jensch.works/zl/pkg/zettel"
+	"git.jensch.dev/zl/pkg/zettel"
 )
 
 func makeCmdTldr(st zettel.Storage) *cli.Command {

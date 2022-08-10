@@ -1,4 +1,4 @@
-module jensch.works/zl
+module git.jensch.dev/zl
 
 go 1.18
 

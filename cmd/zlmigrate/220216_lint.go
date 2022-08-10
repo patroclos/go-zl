@@ -11,8 +11,8 @@ import (
 
 	"github.com/go-clix/cli"
 	"github.com/go-git/go-billy/v5/osfs"
-	"jensch.works/zl/pkg/storage"
-	"jensch.works/zl/pkg/zettel"
+	"git.jensch.dev/zl/pkg/storage"
+	"git.jensch.dev/zl/pkg/zettel"
 )
 
 type linter struct {

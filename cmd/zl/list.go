@@ -6,11 +6,11 @@ import (
 	"strings"
 
 	"github.com/go-clix/cli"
-	"jensch.works/zl/cmd/zl/view"
-	"jensch.works/zl/pkg/visibility"
-	"jensch.works/zl/pkg/zettel"
-	"jensch.works/zl/pkg/zettel/crawl"
-	"jensch.works/zl/pkg/zettel/graph"
+	"git.jensch.dev/zl/cmd/zl/view"
+	"git.jensch.dev/zl/pkg/visibility"
+	"git.jensch.dev/zl/pkg/zettel"
+	"git.jensch.dev/zl/pkg/zettel/crawl"
+	"git.jensch.dev/zl/pkg/zettel/graph"
 )
 
 func makeCmdList(st zettel.Storage) *cli.Command {

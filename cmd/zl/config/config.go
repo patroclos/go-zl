@@ -6,7 +6,7 @@ import (
 
 	"github.com/kirsle/configdir"
 	"gopkg.in/yaml.v2"
-	"jensch.works/zl/pkg/zettel"
+	"git.jensch.dev/zl/pkg/zettel"
 )
 
 type Config struct {

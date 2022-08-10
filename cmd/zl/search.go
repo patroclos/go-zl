@@ -1,15 +1,16 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"os"
 	"strings"
 
 	"github.com/go-clix/cli"
-	"jensch.works/zl/pkg/storage/strutil"
-	"jensch.works/zl/pkg/visibility"
-	"jensch.works/zl/pkg/zettel"
+	"git.jensch.dev/zl/pkg/storage/strutil"
+	"git.jensch.dev/zl/pkg/visibility"
+	"git.jensch.dev/zl/pkg/zettel"
 )
 
 func makeCmdSearch(st zettel.Storage) *cli.Command {
@@ -38,8 +39,17 @@ func makeCmdSearch(st zettel.Storage) *cli.Command {
 			plain.WriteString(args[i])
 		}
 
+		iter := st.Iter()
+		if !isTerminal(os.Stdin) {
+			listing, err := scanListing(bufio.NewScanner(os.Stdin), st)
+			if err != nil {
+				return fmt.Errorf("failed reading listing from stdin: %w", err)
+			}
+			iter = zettel.Slice(listing).Iter()
+		}
+
 		matches := 0
-		for iter := st.Iter(); iter.Next(); {
+		for iter.Next() {
 			zet := iter.Zet()
 			if !visibility.Visible(zet, strings.Split(os.Getenv("ZL_TOLERATE"), ",")) {
 				continue

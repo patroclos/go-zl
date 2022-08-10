@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/go-git/go-billy/v5/memfs"
-	"jensch.works/zl/pkg/storage"
-	"jensch.works/zl/pkg/visibility"
-	"jensch.works/zl/pkg/zettel"
+	"git.jensch.dev/zl/pkg/storage"
+	"git.jensch.dev/zl/pkg/visibility"
+	"git.jensch.dev/zl/pkg/zettel"
 )
 
 func TestMaskTolerates(t *testing.T) {

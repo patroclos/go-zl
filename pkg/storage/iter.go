@@ -3,8 +3,8 @@ package storage
 import (
 	"io/fs"
 
+	"git.jensch.dev/zl/pkg/zettel"
 	"github.com/go-git/go-billy/v5"
-	"jensch.works/zl/pkg/zettel"
 )
 
 type iter struct {

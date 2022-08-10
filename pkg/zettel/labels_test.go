@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"jensch.works/zl/pkg/zettel"
+	"git.jensch.dev/zl/pkg/zettel"
 )
 
 func TestParseLabelspec_default(t *testing.T) {

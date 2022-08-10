@@ -1,7 +1,7 @@
 package prompt
 
 import (
-	"jensch.works/zl/pkg/zettel/elemz"
+	"git.jensch.dev/zl/pkg/zettel/elemz"
 )
 
 // The prompt package is a parser for a small number of training/reminder question-types

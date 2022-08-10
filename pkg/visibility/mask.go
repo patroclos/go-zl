@@ -3,8 +3,8 @@ package visibility
 import (
 	"strings"
 
-	"jensch.works/zl/pkg/zettel"
-	"jensch.works/zl/pkg/zettel/elemz"
+	"git.jensch.dev/zl/pkg/zettel"
+	"git.jensch.dev/zl/pkg/zettel/elemz"
 )
 
 type MaskView struct {
