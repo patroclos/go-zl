@@ -1,4 +1,4 @@
-module git.jensch.dev/zl
+module git.jensch.dev/joshua/zl
 
 go 1.18
 

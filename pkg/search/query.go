@@ -3,7 +3,7 @@ package search
 import (
 	"strings"
 
-	"git.jensch.dev/zl/pkg/zettel"
+	"git.jensch.dev/joshua/zl/pkg/zettel"
 )
 
 type Params struct {

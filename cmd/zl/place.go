@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/go-clix/cli"
-	"git.jensch.dev/zl/pkg/search"
-	"git.jensch.dev/zl/pkg/zettel"
+	"git.jensch.dev/joshua/zl/pkg/search"
+	"git.jensch.dev/joshua/zl/pkg/zettel"
 )
 
 func makeCmdPlace(st zettel.Storage) *cli.Command {

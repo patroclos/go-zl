@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-clix/cli"
-	"git.jensch.dev/zl/cmd/zl/config"
+	"git.jensch.dev/joshua/zl/cmd/zl/config"
 )
 
 func Switch() *cli.Command {

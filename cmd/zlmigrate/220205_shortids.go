@@ -8,9 +8,9 @@ import (
 
 	"github.com/go-clix/cli"
 	"github.com/go-git/go-billy/v5/osfs"
-	"git.jensch.dev/zl/pkg/storage"
-	"git.jensch.dev/zl/pkg/zettel"
-	"git.jensch.dev/zl/pkg/zettel/elemz"
+	"git.jensch.dev/joshua/zl/pkg/storage"
+	"git.jensch.dev/joshua/zl/pkg/zettel"
+	"git.jensch.dev/joshua/zl/pkg/zettel/elemz"
 )
 
 func makeCmdShortIds() *cli.Command {

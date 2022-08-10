@@ -3,7 +3,7 @@ package prompt
 import (
 	"testing"
 
-	"git.jensch.dev/zl/pkg/zettel/elemz"
+	"git.jensch.dev/joshua/zl/pkg/zettel/elemz"
 )
 
 func TestOmit(t *testing.T) {

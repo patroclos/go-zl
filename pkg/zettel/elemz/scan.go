@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"git.jensch.dev/zl/pkg/zettel"
+	"git.jensch.dev/joshua/zl/pkg/zettel"
 )
 
 type Scanner interface {

@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-git/go-billy/v5/osfs"
-	"git.jensch.dev/zl/pkg/storage"
+	"git.jensch.dev/joshua/zl/pkg/storage"
 )
 
 type UrlMaker struct {

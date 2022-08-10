@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"sync"
 
-	"git.jensch.dev/zl/pkg/zettel"
-	"git.jensch.dev/zl/pkg/zettel/elemz"
-	"git.jensch.dev/zl/pkg/zettel/graph"
+	"git.jensch.dev/joshua/zl/pkg/zettel"
+	"git.jensch.dev/joshua/zl/pkg/zettel/elemz"
+	"git.jensch.dev/joshua/zl/pkg/zettel/graph"
 )
 
 type RecurseMask int

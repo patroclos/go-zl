@@ -7,7 +7,7 @@ import (
 	"log"
 	"strings"
 
-	"git.jensch.dev/zl/pkg/zettel/elemz"
+	"git.jensch.dev/joshua/zl/pkg/zettel/elemz"
 )
 
 type OmitPrompt struct {

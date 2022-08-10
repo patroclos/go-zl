@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/go-clix/cli"
-	"git.jensch.dev/zl/pkg/zettel"
+	"git.jensch.dev/joshua/zl/pkg/zettel"
 )
 
 func makeCmdLabel(st zettel.Storage) *cli.Command {

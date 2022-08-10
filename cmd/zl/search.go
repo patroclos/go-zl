@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/go-clix/cli"
-	"git.jensch.dev/zl/pkg/storage/strutil"
-	"git.jensch.dev/zl/pkg/visibility"
-	"git.jensch.dev/zl/pkg/zettel"
+	"git.jensch.dev/joshua/zl/pkg/storage/strutil"
+	"git.jensch.dev/joshua/zl/pkg/visibility"
+	"git.jensch.dev/joshua/zl/pkg/zettel"
 )
 
 func makeCmdSearch(st zettel.Storage) *cli.Command {
