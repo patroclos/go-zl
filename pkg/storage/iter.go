@@ -3,7 +3,7 @@ package storage
 import (
 	"io/fs"
 
-	"git.jensch.dev/joshua/zl/pkg/zettel"
+	"git.jensch.dev/joshua/go-zl/pkg/zettel"
 	"github.com/go-git/go-billy/v5"
 )
 

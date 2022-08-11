@@ -6,8 +6,8 @@ import (
 
 	"github.com/go-clix/cli"
 	"gonum.org/v1/gonum/graph/community"
-	"git.jensch.dev/joshua/zl/pkg/zettel"
-	"git.jensch.dev/joshua/zl/pkg/zettel/graph"
+	"git.jensch.dev/joshua/go-zl/pkg/zettel"
+	"git.jensch.dev/joshua/go-zl/pkg/zettel/graph"
 )
 
 func makeCmdGraph(st zettel.Storage) *cli.Command {
