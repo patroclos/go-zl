@@ -7,9 +7,9 @@ import (
 
 	"github.com/go-clix/cli"
 	"gonum.org/v1/gonum/graph/community"
-	"git.jensch.dev/joshua/go-zl/pkg/zettel"
-	"git.jensch.dev/joshua/go-zl/pkg/zettel/elemz"
-	zlg "git.jensch.dev/joshua/go-zl/pkg/zettel/graph"
+	"git.jensch.dev/joshua/zl/pkg/zettel"
+	"git.jensch.dev/joshua/zl/pkg/zettel/elemz"
+	zlg "git.jensch.dev/joshua/zl/pkg/zettel/graph"
 )
 
 func makeCmdSummary(st zettel.Storage) *cli.Command {

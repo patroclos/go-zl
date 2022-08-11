@@ -12,7 +12,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/cache"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/storage/filesystem"
-	"git.jensch.dev/joshua/go-zl/pkg/zettel"
+	"git.jensch.dev/joshua/zl/pkg/zettel"
 )
 
 func TestStoreType(t *testing.T) {

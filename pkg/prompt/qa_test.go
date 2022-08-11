@@ -3,7 +3,7 @@ package prompt
 import (
 	"testing"
 
-	"git.jensch.dev/joshua/go-zl/pkg/zettel/elemz"
+	"git.jensch.dev/joshua/zl/pkg/zettel/elemz"
 )
 
 func TestParseQA(t *testing.T) {

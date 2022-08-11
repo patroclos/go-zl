@@ -11,9 +11,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"git.jensch.dev/joshua/go-zl/pkg/zconf"
-	"git.jensch.dev/joshua/go-zl/pkg/zettel"
-	"git.jensch.dev/joshua/go-zl/pkg/zettel/graph"
+	"git.jensch.dev/joshua/zl/pkg/zconf"
+	"git.jensch.dev/joshua/zl/pkg/zettel"
+	"git.jensch.dev/joshua/zl/pkg/zettel/graph"
 )
 
 //go:embed templates

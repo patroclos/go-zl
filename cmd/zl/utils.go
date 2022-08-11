@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"git.jensch.dev/joshua/go-zl/pkg/zettel"
+	"git.jensch.dev/joshua/zl/pkg/zettel"
 )
 
 func pickOne(zets []zettel.Z) (zettel.Z, error) {

@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/go-clix/cli"
-	"git.jensch.dev/joshua/go-zl/pkg/zettel"
-	"git.jensch.dev/joshua/go-zl/pkg/zettel/graph"
+	"git.jensch.dev/joshua/zl/pkg/zettel"
+	"git.jensch.dev/joshua/zl/pkg/zettel/graph"
 )
 
 func makeCmdRemove(st zettel.Storage) *cli.Command {

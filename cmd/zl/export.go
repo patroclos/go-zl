@@ -7,9 +7,9 @@ import (
 
 	"github.com/go-clix/cli"
 	"github.com/go-git/go-billy/v5/osfs"
-	"git.jensch.dev/joshua/go-zl/pkg/visibility"
-	"git.jensch.dev/joshua/go-zl/pkg/zettel"
-	"git.jensch.dev/joshua/go-zl/pkg/zettel/elemz"
+	"git.jensch.dev/joshua/zl/pkg/visibility"
+	"git.jensch.dev/joshua/zl/pkg/zettel"
+	"git.jensch.dev/joshua/zl/pkg/zettel/elemz"
 )
 
 func makeCmdExport(st zettel.Storage) *cli.Command {
