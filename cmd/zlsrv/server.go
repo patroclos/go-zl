@@ -10,10 +10,11 @@ import (
 	"path"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"git.jensch.dev/joshua/zl/pkg/zconf"
 	"git.jensch.dev/joshua/zl/pkg/zettel"
 	"git.jensch.dev/joshua/zl/pkg/zettel/graph"
+	"github.com/gin-gonic/gin"
+	"gonum.org/v1/gonum/graph/community"
 )
 
 //go:embed templates
@@ -61,6 +62,7 @@ func (s server) Bind() {
 	api := s.engine.Group("api")
 	api.Use(cors)
 	api.GET("zettel/:zet", s.apiGetZet)
+	api.GET("communities", s.apiGetCommunities)
 }
 
 func (s server) root(ctx *gin.Context) {
@@ -141,4 +143,51 @@ func (s server) apiGetZet(ctx *gin.Context) {
 		data["meta"] = mdata
 	}
 	ctx.JSON(http.StatusOK, data)
+}
+
+func (s server) apiGetCommunities(ctx *gin.Context) {
+	g, err := graph.Make(s.store)
+	if err != nil {
+		ctx.AbortWithError(500, err)
+	}
+	reduced := community.Modularize(g, 2, nil)
+
+	comm := reduced.Communities()
+	zcmap := make(map[int64]int)
+	data := make([]map[string]any, 0, len(comm))
+	for i, com := range comm {
+		if len(com) < 2 {
+			continue
+		}
+		for _, n := range com {
+			zcmap[n.ID()] = i
+		}
+	}
+	for i, com := range comm {
+		if len(com) < 2 {
+			continue
+		}
+		comzets := make(map[string]string, len(com))
+		comreach := make(map[int]int)
+		comdata := map[string]any{
+			"id":     i,
+			"zettel": comzets,
+			"reach":  comreach,
+		}
+		for _, n := range com {
+			z := g.Verts[n.ID()].Z
+			comzets[z.Id()] = z.Readme().Title
+			edges := g.From(n.ID())
+			for edges.Next() {
+				// lookup zcmap[nodeid], if it exists, bump that thing up
+				comId, ok := zcmap[edges.Node().ID()]
+				if !ok || comId == i {
+					continue
+				}
+				comreach[comId] = comreach[comId] + 1
+			}
+		}
+		data = append(data, comdata)
+	}
+	ctx.PureJSON(http.StatusOK, data)
 }
