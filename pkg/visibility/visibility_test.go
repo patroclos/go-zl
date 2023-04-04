@@ -5,11 +5,11 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/go-git/go-billy/v5/memfs"
 	"git.jensch.dev/joshua/zl/pkg/storage"
 	"git.jensch.dev/joshua/zl/pkg/zettel"
 	"git.jensch.dev/joshua/zl/pkg/zettel/crawl"
 	"git.jensch.dev/joshua/zl/pkg/zettel/graph"
+	"github.com/go-git/go-billy/v5/memfs"
 )
 
 // This test fails ever since moving from Nanosecond Node-IDs to UnixMilli, because
@@ -41,7 +41,7 @@ func TestTaintView(t *testing.T) {
 	}
 
 	if g.Edges().Len() != 2 {
-		t.Fatal("wrong edge count")
+		t.Fatalf("wrong edge count. expected 2, got %d", g.Edges().Len())
 	}
 
 	nodes := g.Nodes()
